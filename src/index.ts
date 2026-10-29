@@ -27,13 +27,13 @@ function parseKeys(value: string | undefined): string[] {
 const providers: Provider[] = [
   {
     name: "groq",
-    baseUrl: "https://api.groq.com/openai/v1",
+    baseUrl: process.env.GROQ_BASE_URL?.trim() || "https://api.groq.com/openai/v1",
     keys: parseKeys(process.env.GROQ_API_KEYS),
     headers: {}
   },
   {
     name: "openrouter",
-    baseUrl: "https://openrouter.ai/api/v1",
+    baseUrl: process.env.OPENROUTER_BASE_URL?.trim() || "https://openrouter.ai/api/v1",
     keys: parseKeys(process.env.OPENROUTER_API_KEYS),
     headers: {
       ...(process.env.OPENROUTER_HTTP_REFERER ? { "HTTP-Referer": process.env.OPENROUTER_HTTP_REFERER } : {}),
