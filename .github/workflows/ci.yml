@@ -1,0 +1,40 @@
+name: API Flow CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Type-check
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Smoke-test health endpoint
+        shell: bash
+        run: |
+          PORT=8787 NODE_ENV=test node dist/index.js > server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:8787/health > health.json; then
+              break
+            fi
+            sleep 1
+          done
+          cat health.json
+          node -e "const h=require('./health.json'); if(h.status!=='ok'||h.service!=='api-flow') process.exit(1)"
