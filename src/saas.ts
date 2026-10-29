@@ -169,6 +169,25 @@ export function createSaasRouter(): Router {
     res.json({ user: { id: req.saasUser!.id, email: req.saasUser!.email }, profile: data });
   });
 
+  router.get("/usage", requireUser, async (req: SaasRequest, res) => {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await admin.from("usage_events")
+      .select("id, api_key_id, provider, model, status_code, latency_ms, input_tokens, output_tokens, created_at")
+      .eq("user_id", req.saasUser!.id).gte("created_at", since)
+      .order("created_at", { ascending: false }).limit(500);
+    if (error) { publicError(res, 500, "Could not load usage history."); return; }
+    const events = data ?? [];
+    res.json({
+      period: "30d",
+      totalRequests: events.length,
+      successfulRequests: events.filter((event) => event.status_code >= 200 && event.status_code < 400).length,
+      failedRequests: events.filter((event) => event.status_code >= 400).length,
+      totalInputTokens: events.reduce((sum, event) => sum + (event.input_tokens ?? 0), 0),
+      totalOutputTokens: events.reduce((sum, event) => sum + (event.output_tokens ?? 0), 0),
+      events
+    });
+  });
+
   router.get("/keys", requireUser, async (req: SaasRequest, res) => {
     const { data, error } = await admin.from("api_keys")
       .select("id, name, key_prefix, last_used_at, expires_at, revoked_at, created_at")
