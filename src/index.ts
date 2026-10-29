@@ -75,7 +75,7 @@ function requireGatewayKey(req: Request, res: Response, next: NextFunction): voi
     return;
   }
   const auth = req.header("authorization") ?? "";
-  const bearer = auth.match(/^Bearer\\s+(.+)$/i)?.[1] ?? req.header("x-api-key");
+  const bearer = auth.match(/^Bearer\s+(.+)$/i)?.[1] ?? req.header("x-api-key");
   if (!bearer || !safeEqual(bearer, gatewayApiKey)) {
     res.status(401).json({ error: { message: "Invalid or missing API Flow key.", type: "authentication_error" } });
     return;
