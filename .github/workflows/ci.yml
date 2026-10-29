@@ -24,6 +24,8 @@ jobs:
         run: npm run typecheck
       - name: Build
         run: npm run build
+      - name: Run automated HTTP tests
+        run: npm test
       - name: Smoke-test health endpoint
         shell: bash
         run: |
