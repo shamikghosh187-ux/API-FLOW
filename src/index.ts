@@ -129,8 +129,14 @@ app.get("/api/info", (_req, res) => {
     name: "API FLOW",
     description: "OpenAI-compatible API gateway with provider and API-key failover.",
     endpoints: { health: "/health", chatCompletions: "POST /v1/chat/completions" },
+    limits: {
+      dailyRequests: { free: 100, pro: 1000, business: 5000 },
+      resetTime: "00:00 UTC",
+      note: "Starter per-account request limits; not a billing meter or concurrency-safe reservation system."
+    },
     features: {
       streaming: false,
+      dailyRequestQuotas: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SECRET_KEY),
       customerAccounts: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_PUBLISHABLE_KEY && process.env.SUPABASE_SECRET_KEY),
       customerApiKeys: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SECRET_KEY),
       usageAnalytics: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SECRET_KEY),
