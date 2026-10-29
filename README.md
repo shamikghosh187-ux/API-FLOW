@@ -16,6 +16,12 @@ API FLOW is an early-stage, self-hostable OpenAI-compatible gateway. It forwards
 - `GET /api/info` endpoint describing current implementation status.
 - Automated HTTP tests, including a mock-upstream test proving failover after a simulated 429.
 
+## SaaS database foundation
+
+A starter Supabase migration is available at `supabase/migrations/202610290001_api_flow_saas_foundation.sql`. It defines customer profiles, hashed customer API-key records, request usage events, indexes, and restrictive row-level security policies.
+
+This is a database foundation only. It does not yet implement signup/login routes, customer-key generation and verification, usage metering, quota enforcement, or a dashboard. Trusted server-side code must create profiles and manage plan changes; browser clients cannot directly read or write API-key or usage-event records. Apply the migration only to the dedicated API FLOW Supabase project after reviewing it. Do not run it against unrelated projects.
+
 ## Important: what is not implemented yet
 
 The website includes **proposed** Free, Pro, and Business plans for product direction only. They are not purchasable plans and do not represent a live subscription service.
