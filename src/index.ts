@@ -5,7 +5,7 @@ import helmet from "helmet";
 import pino from "pino";
 import pinoHttp from "pino-http";
 import { z } from "zod";
-import { createSaasRouter, verifyCustomerApiKey } from "./saas.js";
+import { createSaasRouter, recordCustomerUsage, verifyCustomerApiKey } from "./saas.js";
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? "info" });
 const app = express();
@@ -196,6 +196,22 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
           latencyMs: Date.now() - startedAt,
           status: upstream.status
         }, "Upstream request succeeded");
+        const customer = res.locals.apiFlowCustomer as { userId: string; keyId: string } | undefined;
+        if (customer) {
+          try {
+            await recordCustomerUsage({
+              ...customer,
+              provider: attempt.provider.name,
+              model: typeof payload?.model === "string" ? payload.model : parsed.data.model,
+              statusCode: upstream.status,
+              latencyMs: Date.now() - startedAt,
+              inputTokens: Number.isInteger(payload?.usage?.prompt_tokens) ? payload.usage.prompt_tokens : undefined,
+              outputTokens: Number.isInteger(payload?.usage?.completion_tokens) ? payload.usage.completion_tokens : undefined
+            });
+          } catch (usageError) {
+            logger.error({ err: usageError }, "Could not record customer usage");
+          }
+        }
         res.status(upstream.status).json(payload);
         return;
       }
@@ -210,6 +226,14 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
       }, "Upstream request failed");
 
       if (![401, 403, 408, 429, 500, 502, 503, 504].includes(upstream.status)) {
+        const customer = res.locals.apiFlowCustomer as { userId: string; keyId: string } | undefined;
+        if (customer) {
+          try {
+            await recordCustomerUsage({ ...customer, provider: attempt.provider.name, model: parsed.data.model, statusCode: upstream.status, latencyMs: Date.now() - startedAt });
+          } catch (usageError) {
+            logger.error({ err: usageError }, "Could not record customer usage");
+          }
+        }
         res.status(upstream.status).json({
           error: { message: "The provider rejected the request.", type: "upstream_error", provider: attempt.provider.name, status: upstream.status }
         });
@@ -225,6 +249,19 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
   }
 
   const rateLimited = errors.some((error) => error.status === 429);
+  const customer = res.locals.apiFlowCustomer as { userId: string; keyId: string } | undefined;
+  if (customer) {
+    try {
+      await recordCustomerUsage({
+        ...customer,
+        provider: errors.at(-1)?.provider ?? "other",
+        model: parsed.data.model,
+        statusCode: 502
+      });
+    } catch (usageError) {
+      logger.error({ err: usageError }, "Could not record customer usage");
+    }
+  }
   res.status(502).json({
     error: {
       message: "All configured upstream attempts failed. Check provider keys, limits, and model availability.",
