@@ -10,7 +10,7 @@ API FLOW is an early-stage, self-hostable OpenAI-compatible gateway. It forwards
 - OpenAI-compatible `POST /v1/chat/completions` endpoint.
 - Multiple Groq keys and OpenRouter keys configured server-side.
 - Sequential provider/key failover for selected transient errors.
-- Optional gateway client-key authentication (required for protected chat requests in production).
+- Shared operator key authentication for controlled testing, plus individual customer API-key verification when Supabase server credentials are configured.\n- Supabase-backed signup/login endpoints, account profile lookup, and customer API-key create/list/revoke endpoints.
 - Request validation, request timeout, body-size limit, Helmet security headers, and redacted authorization logs.
 - `GET /health` endpoint showing whether provider keys are configured without revealing them.
 - `GET /api/info` endpoint describing current implementation status.
@@ -20,7 +20,7 @@ API FLOW is an early-stage, self-hostable OpenAI-compatible gateway. It forwards
 
 A starter Supabase migration is available at `supabase/migrations/202610290001_api_flow_saas_foundation.sql`. It defines customer profiles, hashed customer API-key records, request usage events, indexes, and restrictive row-level security policies.
 
-This is a database foundation only. It does not yet implement signup/login routes, customer-key generation and verification, usage metering, quota enforcement, or a dashboard. Trusted server-side code must create profiles and manage plan changes; browser clients cannot directly read or write API-key or usage-event records. Apply the migration only to the dedicated API FLOW Supabase project after reviewing it. Do not run it against unrelated projects.
+The migration is applied to the dedicated API FLOW Supabase project. The server now includes initial signup/login, profile lookup, and customer API-key create/list/revoke routes. API key secrets are returned once and only hashes are stored. Customer keys can authenticate gateway requests. This is still an early foundation: usage metering, enforced request quotas, a customer-facing dashboard, email verification UX, abuse protection, and production tests remain to be completed. Browser clients cannot directly read or write API-key or usage-event records.
 
 ## Important: what is not implemented yet
 
@@ -82,7 +82,7 @@ npm test
 
 Tests use no real provider API keys. The failover test uses a mock upstream; it does not establish live provider availability or guarantee production reliability.
 
-## Example request
+## SaaS API routes\n\n- `POST /api/saas/signup` — JSON `{ "email", "password", "displayName?" }` (password minimum 10 characters).\n- `POST /api/saas/login` — JSON `{ "email", "password" }`.\n- `GET /api/saas/me` — requires `Authorization: Bearer <Supabase access token>`.\n- `GET /api/saas/keys` — list your own key metadata (never returns stored secrets).\n- `POST /api/saas/keys` — JSON `{ "name": "My app" }`; returns the new secret once.\n- `DELETE /api/saas/keys/:id` — revoke an active key owned by the signed-in user.\n\nCustomer gateway keys start with `af_live_`. Set the three Supabase environment variables above on the server before these routes will work. The publishable key is not a secret; the Supabase secret key is server-only. Email confirmation settings in Supabase Auth may require users to confirm email before login.\n\n## Example request
 
 Replace `YOUR_GATEWAY_KEY` with the value of `GATEWAY_API_KEY` if you configured one. In local development, the key is optional when the variable is empty.
 
@@ -103,7 +103,7 @@ Use a model supported by the configured provider. This initial version preserves
 
 - `PORT` — HTTP port (default `8787`).
 - `NODE_ENV` — set to `production` in production.
-- `GATEWAY_API_KEY` — long, random client key for the current single-key gateway authentication.
+- `GATEWAY_API_KEY` — long, random operator key for controlled testing.\n- `SUPABASE_URL` — URL of the dedicated API FLOW Supabase project.\n- `SUPABASE_PUBLISHABLE_KEY` — Supabase publishable key used for Auth signup/login.\n- `SUPABASE_SECRET_KEY` — server-only Supabase secret key; never expose it to the browser or commit real values.
 - `GROQ_API_KEYS` — comma-separated Groq keys.
 - `OPENROUTER_API_KEYS` — comma-separated OpenRouter keys.
 - `GROQ_BASE_URL`, `OPENROUTER_BASE_URL` — optional provider base URLs (also used by automated mock tests).
