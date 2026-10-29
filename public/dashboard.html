@@ -101,7 +101,7 @@
     $("metric-tokens").textContent = ((data.totalInputTokens ?? 0) + (data.totalOutputTokens ?? 0)).toLocaleString();
     if (data.dailyQuota) {
       $("metric-quota").textContent = Math.max(0, data.dailyQuota.limit - data.dailyQuota.used).toLocaleString() + " left";
-      $("metric-quota-note").textContent = data.dailyQuota.used.toLocaleString() + " / " + data.dailyQuota.limit.toLocaleString() + " requests · resets " + new Date(data.dailyQuota.resetsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + " UTC day";
+      $("metric-quota-note").textContent = data.dailyQuota.used.toLocaleString() + " / " + data.dailyQuota.limit.toLocaleString() + " requests · resets at 00:00 UTC";
     } else {
       $("metric-quota").textContent = "Unavailable";
       $("metric-quota-note").textContent = "Usage controls need server configuration";
