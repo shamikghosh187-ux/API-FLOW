@@ -40,11 +40,22 @@ after(() => {
   if (child && child.exitCode === null) child.kill("SIGTERM");
 });
 
-test("root endpoint returns service information", async () => {
+test("root endpoint serves the API FLOW product website", async () => {
   const response = await fetch(baseUrl);
   assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type"), /text\\/html/);
+  const body = await response.text();
+  assert.match(body, /One endpoint/);
+  assert.match(body, /Proposed plans/);
+});
+
+test("product info endpoint exposes current implementation status", async () => {
+  const response = await fetch(`${baseUrl}/api/info`);
+  assert.equal(response.status, 200);
   const body = await response.json();
-  assert.equal(body.name, "API Flow");
+  assert.equal(body.name, "API FLOW");
+  assert.equal(body.features.customerAccounts, false);
+  assert.equal(body.features.subscriptions, false);
 });
 
 test("health endpoint reports configured state without secrets", async () => {
