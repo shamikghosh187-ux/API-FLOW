@@ -57,7 +57,8 @@ export async function verifyCustomerApiKey(rawKey: string): Promise<{ userId: st
 
 export type CustomerQuotaResult =
   | { allowed: true; plan: "free" | "pro" | "business"; used: number; limit: number; resetsAt: string }
-  | { allowed: false; reason: "limit" | "unavailable"; plan?: "free" | "pro" | "business"; used?: number; limit?: number; resetsAt?: string };
+  | { allowed: false; reason: "limit"; plan: "free" | "pro" | "business"; used: number; limit: number; resetsAt: string }
+  | { allowed: false; reason: "unavailable" };
 
 export async function checkCustomerQuota(userId: string): Promise<CustomerQuotaResult> {
   const url = process.env.SUPABASE_URL?.trim();
