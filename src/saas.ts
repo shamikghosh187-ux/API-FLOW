@@ -41,6 +41,33 @@ export async function verifyCustomerApiKey(rawKey: string): Promise<{ userId: st
   return { userId: data.user_id, keyId: data.id };
 }
 
+export async function recordCustomerUsage(input: {
+  userId: string;
+  keyId: string;
+  provider: "groq" | "openrouter" | "other";
+  model?: string;
+  statusCode: number;
+  latencyMs?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+}): Promise<void> {
+  const url = process.env.SUPABASE_URL?.trim();
+  const secretKey = process.env.SUPABASE_SECRET_KEY?.trim();
+  if (!url || !secretKey) return;
+  const admin = createClient(url, secretKey, { auth: { autoRefreshToken: false, persistSession: false } });
+  const { error } = await admin.from("usage_events").insert({
+    user_id: input.userId,
+    api_key_id: input.keyId,
+    provider: input.provider,
+    model: input.model?.slice(0, 200) ?? null,
+    status_code: Math.min(599, Math.max(100, Math.trunc(input.statusCode))),
+    latency_ms: input.latencyMs == null ? null : Math.max(0, Math.trunc(input.latencyMs)),
+    input_tokens: input.inputTokens == null ? null : Math.max(0, Math.trunc(input.inputTokens)),
+    output_tokens: input.outputTokens == null ? null : Math.max(0, Math.trunc(input.outputTokens))
+  });
+  if (error) throw new Error("Usage event could not be recorded");
+}
+
 export function createSaasRouter(): Router {
   const router = Router();
   const url = process.env.SUPABASE_URL?.trim();
