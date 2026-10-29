@@ -201,8 +201,15 @@ export function createSaasRouter(): Router {
       .order("created_at", { ascending: false }).limit(500);
     if (error) { publicError(res, 500, "Could not load usage history."); return; }
     const events = data ?? [];
+    const quota = await checkCustomerQuota(req.saasUser!.id);
+    const dailyQuota = quota.allowed
+      ? { plan: quota.plan, used: quota.used, limit: quota.limit, resetsAt: quota.resetsAt }
+      : quota.reason === "limit"
+        ? { plan: quota.plan, used: quota.used, limit: quota.limit, resetsAt: quota.resetsAt }
+        : null;
     res.json({
       period: "30d",
+      dailyQuota,
       totalRequests: events.length,
       successfulRequests: events.filter((event) => event.status_code >= 200 && event.status_code < 400).length,
       failedRequests: events.filter((event) => event.status_code >= 400).length,
