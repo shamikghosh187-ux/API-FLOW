@@ -20,7 +20,7 @@
 </section>
 <section id="dashboard-view" class="hidden">
 <div class="intro"><div><div class="eyebrow">Workspace</div><h1>API dashboard</h1><div class="muted" id="welcome">Your gateway activity, at a glance.</div></div><span class="pill" id="plan-pill">FREE PLAN</span></div>
-<div class="grid"><article class="card"><div class="metric-label">Requests recorded</div><div class="metric" id="metric-total">—</div><div class="muted">Last 30 days · max 500 shown</div></article><article class="card"><div class="metric-label">Successful requests</div><div class="metric" id="metric-success">—</div><div class="muted">HTTP status 2xx–3xx</div></article><article class="card"><div class="metric-label">Tokens recorded</div><div class="metric" id="metric-tokens">—</div><div class="muted">Input + output, when provider returns usage</div></article></div>
+<div class="grid"><article class="card"><div class="metric-label">Requests recorded</div><div class="metric" id="metric-total">—</div><div class="muted">Last 30 days · accurate total</div></article><article class="card"><div class="metric-label">Successful requests</div><div class="metric" id="metric-success">—</div><div class="muted">HTTP status 2xx–3xx</div></article><article class="card"><div class="metric-label">Tokens recorded</div><div class="metric" id="metric-tokens">—</div><div class="muted">Latest 500 records, when provider returns usage</div></article><article class="card"><div class="metric-label">Daily allowance</div><div class="metric" id="metric-quota">—</div><div class="muted" id="metric-quota-note">Loading quota…</div></article></div>
 <div class="card section"><div class="section-head"><div><h2>API keys</h2><div class="muted">Secrets are shown only once when created.</div></div><button class="primary" id="new-key-btn">＋ Create key</button></div><div id="key-message" class="message"></div><div id="key-list" class="list"><div class="empty">Loading keys…</div></div></div>
 <div class="card section"><div class="section-head"><div><h2>Usage history</h2><div class="muted">Recent request records from the last 30 days.</div></div><button id="refresh-btn">Refresh</button></div><div class="tablewrap"><table><thead><tr><th>Time</th><th>Model</th><th>Provider</th><th>Status</th><th>Latency</th><th>Tokens</th></tr></thead><tbody id="usage-rows"><tr><td colspan="6" class="empty">Loading usage…</td></tr></tbody></table></div><p class="muted" style="font-size:11px">Usage is recorded for authenticated customer API keys. Operator-key traffic is not included. Request prompts and responses are not stored.</p></div>
 </section>
@@ -99,6 +99,13 @@
     $("metric-total").textContent = data.totalRequests ?? 0;
     $("metric-success").textContent = data.successfulRequests ?? 0;
     $("metric-tokens").textContent = ((data.totalInputTokens ?? 0) + (data.totalOutputTokens ?? 0)).toLocaleString();
+    if (data.dailyQuota) {
+      $("metric-quota").textContent = Math.max(0, data.dailyQuota.limit - data.dailyQuota.used).toLocaleString() + " left";
+      $("metric-quota-note").textContent = data.dailyQuota.used.toLocaleString() + " / " + data.dailyQuota.limit.toLocaleString() + " requests · resets " + new Date(data.dailyQuota.resetsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + " UTC day";
+    } else {
+      $("metric-quota").textContent = "Unavailable";
+      $("metric-quota-note").textContent = "Usage controls need server configuration";
+    }
     const rows = $("usage-rows");
     if (!data.events?.length) { rows.innerHTML = '<tr><td colspan="6" class="empty">No usage recorded yet. Send a request with a customer API key first.</td></tr>'; return; }
     rows.innerHTML = data.events.map((event) => '<tr><td>' + escapeHtml(new Date(event.created_at).toLocaleString()) + '</td><td>' + escapeHtml(event.model || "—") + '</td><td>' + escapeHtml(event.provider) + '</td><td>' + escapeHtml(event.status_code) + '</td><td>' + (event.latency_ms == null ? "—" : escapeHtml(event.latency_ms + " ms")) + '</td><td>' + escapeHtml(((event.input_tokens || 0) + (event.output_tokens || 0)) || "—") + '</td></tr>').join("");
