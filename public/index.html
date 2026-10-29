@@ -13,8 +13,8 @@
 <body>
 <header class="wrap top">
 <a class="brand" href="/"><span class="mark">↗</span><span>API FLOW</span></a>
-<nav class="nav"><a href="#features">Platform</a><a href="#pricing">Pricing</a><a href="#developers">Developers</a></nav>
-<div class="topright"><span class="status"><i class="dot"></i><span id="live-status">Gateway status checking</span></span><a class="btn" href="https://github.com/shamikghosh187-ux/API-FLOW" target="_blank" rel="noreferrer">GitHub ↗</a></div>
+<nav class="nav"><a href="#features">Platform</a><a href="#pricing">Pricing</a><a href="#developers">Developers</a><a href="/dashboard.html">Dashboard</a></nav>
+<div class="topright"><a class="btn" href="/dashboard.html">Sign in</a><span class="status"><i class="dot"></i><span id="live-status">Gateway status checking</span></span><a class="btn" href="https://github.com/shamikghosh187-ux/API-FLOW" target="_blank" rel="noreferrer">GitHub ↗</a></div>
 </header>
 <main class="wrap">
 <section class="hero">
@@ -58,7 +58,7 @@
 </section>
 <section class="section" id="developers">
 <div class="dev">
-<div><div class="eyebrow">For developers</div><h2>One endpoint to get started.</h2><p>Run the gateway yourself, configure your provider keys as server-side environment variables, then send an OpenAI-compatible request.</p><p><strong style="color:#e6edf5">Heads up:</strong> The gateway is an early build. Public customer accounts, per-customer usage limits, billing, streaming, and a production dashboard are not implemented yet.</p><a class="btn" href="https://github.com/shamikghosh187-ux/API-FLOW" target="_blank" rel="noreferrer">Read setup instructions ↗</a></div>
+<div><div class="eyebrow">For developers</div><h2>One endpoint to get started.</h2><p>Run the gateway yourself, configure your provider keys as server-side environment variables, then send an OpenAI-compatible request.</p><p><strong style="color:#e6edf5">Heads up:</strong> The gateway is an early build. Usage history and a starter customer dashboard are available in early access. Quotas, billing, streaming, and production abuse protection are still in development.</p><a class="btn" href="https://github.com/shamikghosh187-ux/API-FLOW" target="_blank" rel="noreferrer">Read setup instructions ↗</a></div>
 <div><pre><span class="kw">curl</span> http://localhost:8787/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_GATEWAY_KEY" \
