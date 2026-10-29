@@ -52,17 +52,12 @@ alter table public.profiles enable row level security;
 alter table public.api_keys enable row level security;
 alter table public.usage_events enable row level security;
 
--- A signed-in user may read and update their own profile only.
+-- Users may read only their own profile. Plan changes must be performed by
+-- trusted server-side code, never by the browser.
 drop policy if exists "Users can read own profile" on public.profiles;
 create policy "Users can read own profile"
   on public.profiles for select to authenticated
   using ((select auth.uid()) = id);
-
-drop policy if exists "Users can update own profile" on public.profiles;
-create policy "Users can update own profile"
-  on public.profiles for update to authenticated
-  using ((select auth.uid()) = id)
-  with check ((select auth.uid()) = id);
 
 -- The initial browser policy deliberately allows listing key metadata only through
 -- a future server API; direct table access is denied to authenticated clients too.
@@ -80,26 +75,6 @@ create policy "No direct client access to usage events"
   on public.usage_events for all to authenticated
   using (false)
   with check (false);
-
--- Create a profile automatically when a new Supabase Auth user signs up.
-create or replace function public.handle_new_api_flow_user()
-returns trigger
-language plpgsql
-security definer
-set search_path = ''
-as $$
-begin
-  insert into public.profiles (id, display_name)
-  values (new.id, coalesce(new.raw_user_meta_data ->> 'name', ''))
-  on conflict (id) do nothing;
-  return new;
-end;
-$$;
-
-drop trigger if exists on_api_flow_user_created on auth.users;
-create trigger on_api_flow_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_api_flow_user();
 
 comment on table public.api_keys is
   'Store only a cryptographic hash of each customer API key. Display plaintext once at creation; never persist it.';
