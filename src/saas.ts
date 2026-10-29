@@ -41,6 +41,30 @@ export async function verifyCustomerApiKey(rawKey: string): Promise<{ userId: st
   return { userId: data.user_id, keyId: data.id };
 }
 
+export type CustomerQuotaResult =
+  | { allowed: true; plan: "free" | "pro" | "business"; used: number; limit: number; resetsAt: string }
+  | { allowed: false; reason: "limit" | "unavailable"; plan?: "free" | "pro" | "business"; used?: number; limit?: number; resetsAt?: string };
+
+export async function checkCustomerQuota(userId: string): Promise<CustomerQuotaResult> {
+  const url = process.env.SUPABASE_URL?.trim();
+  const secretKey = process.env.SUPABASE_SECRET_KEY?.trim();
+  if (!url || !secretKey) return { allowed: false, reason: "unavailable" };
+  const admin = createClient(url, secretKey, { auth: { autoRefreshToken: false, persistSession: false } });
+  const { data: profile, error: profileError } = await admin.from("profiles").select("plan").eq("id", userId).maybeSingle();
+  if (profileError || !profile || !["free", "pro", "business"].includes(profile.plan)) return { allowed: false, reason: "unavailable" };
+  const plan = profile.plan as "free" | "pro" | "business";
+  const limits = { free: 100, pro: 1000, business: 5000 } as const;
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const resetsAt = new Date(start.getTime() + 24 * 60 * 60 * 1000).toISOString();
+  const { count, error: countError } = await admin.from("usage_events")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId).gte("created_at", start.toISOString());
+  if (countError || count == null) return { allowed: false, reason: "unavailable" };
+  const limit = limits[plan];
+  if (count >= limit) return { allowed: false, reason: "limit", plan, used: count, limit, resetsAt };
+  return { allowed: true, plan, used: count, limit, resetsAt };
+}
 export async function recordCustomerUsage(input: {
   userId: string;
   keyId: string;
