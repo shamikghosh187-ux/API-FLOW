@@ -22,16 +22,16 @@ API FLOW is an early-stage, self-hostable OpenAI-compatible gateway. It forwards
 
 A starter Supabase migration is available at `supabase/migrations/202610290001_api_flow_saas_foundation.sql`. It defines customer profiles, hashed customer API-key records, request usage events, indexes, and restrictive row-level security policies.
 
-The migration is applied to the dedicated API FLOW Supabase project. The server includes signup/login, profile lookup, customer API-key create/list/revoke routes, usage event recording for customer-key gateway requests, and a `/api/saas/usage` endpoint. The dashboard lets customers manage keys and inspect recent request records. API key secrets are returned once and only hashes are stored. Browser clients cannot directly read or write API-key or usage-event records. This is still an early foundation: enforced request quotas, billing, robust rate limiting/abuse protection, email verification UX, and production tests remain to be completed.
+The migration is applied to the dedicated API FLOW Supabase project. The server includes signup/login, profile lookup, customer API-key create/list/revoke routes, usage event recording for customer-key gateway requests, and a `/api/saas/usage` endpoint. The dashboard lets customers manage keys and inspect recent request records. API key secrets are returned once and only hashes are stored. Browser clients cannot directly read or write API-key or usage-event records. Daily request quotas are enforced using recorded request events: Free 100/day, Pro 1,000/day, and Business 5,000/day (UTC reset). These are starter limits, not a concurrency-safe billing meter; plan upgrades are not self-service. Billing, robust IP rate limiting/abuse protection, email verification UX, and production tests remain to be completed.
 
 ## Important: what is not implemented yet
 
-The website includes **proposed** Free, Pro, and Business plans for product direction only. They are not purchasable plans and do not represent a live subscription service.
+The website includes **proposed** Free, Pro, and Business prices for product direction only. They are not purchasable plans and do not represent a live subscription service. The backend currently applies starter daily request limits based on the profile plan; customers cannot purchase or self-select paid plans.
 
 Not implemented yet:
-- Enforced per-customer request/token quotas and plan-based limits.
+- Token-based quotas, atomic concurrent quota reservations, and plan upgrades.
 - Billing, subscription management, and payment enforcement.
-- Production-grade rate limiting and abuse protection.
+- Production-grade IP rate limiting and abuse protection.
 - Payments, subscription management, invoicing, or billing enforcement.
 - Streaming responses.
 - Production-grade persistent provider health and cooldown management.
