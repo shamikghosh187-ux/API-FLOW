@@ -201,6 +201,15 @@ export function createSaasRouter(): Router {
       .order("created_at", { ascending: false }).limit(500);
     if (error) { publicError(res, 500, "Could not load usage history."); return; }
     const events = data ?? [];
+    const [totalResult, successResult, failedResult] = await Promise.all([
+      admin.from("usage_events").select("id", { count: "exact", head: true }).eq("user_id", req.saasUser!.id).gte("created_at", since),
+      admin.from("usage_events").select("id", { count: "exact", head: true }).eq("user_id", req.saasUser!.id).gte("created_at", since).gte("status_code", 200).lt("status_code", 400),
+      admin.from("usage_events").select("id", { count: "exact", head: true }).eq("user_id", req.saasUser!.id).gte("created_at", since).gte("status_code", 400)
+    ]);
+    if (totalResult.error || successResult.error || failedResult.error) {
+      publicError(res, 500, "Could not calculate usage totals.");
+      return;
+    }
     const quota = await checkCustomerQuota(req.saasUser!.id);
     const dailyQuota = quota.allowed
       ? { plan: quota.plan, used: quota.used, limit: quota.limit, resetsAt: quota.resetsAt }
@@ -210,9 +219,9 @@ export function createSaasRouter(): Router {
     res.json({
       period: "30d",
       dailyQuota,
-      totalRequests: events.length,
-      successfulRequests: events.filter((event) => event.status_code >= 200 && event.status_code < 400).length,
-      failedRequests: events.filter((event) => event.status_code >= 400).length,
+      totalRequests: totalResult.count ?? 0,
+      successfulRequests: successResult.count ?? 0,
+      failedRequests: failedResult.count ?? 0,
       totalInputTokens: events.reduce((sum, event) => sum + (event.input_tokens ?? 0), 0),
       totalOutputTokens: events.reduce((sum, event) => sum + (event.output_tokens ?? 0), 0),
       events
