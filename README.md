@@ -1,24 +1,35 @@
-# API Flow
+# API FLOW
 
-**One endpoint. Multiple provider keys. Automatic failover.**
+**One API. Automatic failover.**
 
-API Flow is a lightweight, self-hostable gateway that accepts an OpenAI-compatible chat-completions request and routes it to configured providers. It tries configured keys in order and moves to the next attempt for authentication failures, rate limits, timeouts, network failures, and upstream server errors.
+API FLOW is an early-stage, self-hostable OpenAI-compatible gateway. It forwards chat-completion requests to configured providers and tries eligible keys in sequence when an upstream returns an authentication failure, rate limit, timeout, network error, or selected server errors.
 
 ## Current capabilities
 
+- Public product landing page served from `public/index.html`.
 - OpenAI-compatible `POST /v1/chat/completions` endpoint.
-- Multiple Groq keys and OpenRouter keys, configured server-side.
-- Sequential key/provider failover per request.
-- Optional gateway client-key authentication.
-- Request logging with authorization headers redacted.
-- Health endpoint that reports provider configuration without exposing keys.
-- Request timeout and body-size limit.
-- TypeScript build and development scripts.
-- Automated HTTP tests for health, service info, validation, missing-provider handling, and malformed JSON.
+- Multiple Groq keys and OpenRouter keys configured server-side.
+- Sequential provider/key failover for selected transient errors.
+- Optional gateway client-key authentication (required for protected chat requests in production).
+- Request validation, request timeout, body-size limit, Helmet security headers, and redacted authorization logs.
+- `GET /health` endpoint showing whether provider keys are configured without revealing them.
+- `GET /api/info` endpoint describing current implementation status.
+- Automated HTTP tests, including a mock-upstream test proving failover after a simulated 429.
 
-## Not implemented yet
+## Important: what is not implemented yet
 
-Streaming responses, live-provider failover integration tests, durable usage analytics, a web dashboard, customer accounts, per-customer quotas/billing, model-aware routing, persistent provider health/cooldowns, and automated integration tests are future milestones. Do not treat this initial gateway as a fully managed production SaaS.
+The website includes **proposed** Free, Pro, and Business plans for product direction only. They are not purchasable plans and do not represent a live subscription service.
+
+Not implemented yet:
+- Customer registration, login, or individual customer accounts.
+- Per-customer gateway keys, tenant isolation, and usage quotas.
+- Persistent request analytics or a customer dashboard backed by real usage data.
+- Payments, subscription management, invoicing, or billing enforcement.
+- Streaming responses.
+- Production-grade persistent provider health and cooldown management.
+- Live integration tests using real provider credentials.
+
+Do not expose this early gateway as a public multi-customer API service until customer authentication, quotas, abuse protection, secret management, and usage/billing controls are implemented and tested.
 
 ## Requirements
 
@@ -33,7 +44,7 @@ Streaming responses, live-provider failover integration tests, durable usage ana
    npm install
    ```
 
-2. Copy the example environment file:
+2. Copy the example environment file.
 
    Windows PowerShell:
    ```powershell
@@ -45,7 +56,7 @@ Streaming responses, live-provider failover integration tests, durable usage ana
    cp .env.example .env
    ```
 
-3. Edit `.env`. Add comma-separated keys to `GROQ_API_KEYS` and/or `OPENROUTER_API_KEYS`. Keep keys private. Never commit `.env`.
+3. Edit `.env`. Add comma-separated keys to `GROQ_API_KEYS` and/or `OPENROUTER_API_KEYS`. Keep real keys private and never commit `.env`.
 
 4. Start in development:
 
@@ -53,25 +64,21 @@ Streaming responses, live-provider failover integration tests, durable usage ana
    npm run dev
    ```
 
-5. Check health:
-
-   ```bash
-   curl http://localhost:8787/health
-   ```
+5. Open `http://localhost:8787` to view the website, or `http://localhost:8787/health` to check the gateway.
 
 ## Tests
 
-Run the automated build and HTTP tests with:
+Run the automated build and HTTP tests:
 
 ```bash
 npm test
 ```
 
-These tests use no real provider API keys and do not prove live upstream failover. A separate integration test with authorized provider credentials is still needed.
+Tests use no real provider API keys. The failover test uses a mock upstream; it does not establish live provider availability or guarantee production reliability.
 
 ## Example request
 
-Replace `YOUR_GATEWAY_KEY` with the value of `GATEWAY_API_KEY` if you configured one. In local development, the key is optional if the variable is empty.
+Replace `YOUR_GATEWAY_KEY` with the value of `GATEWAY_API_KEY` if you configured one. In local development, the key is optional when the variable is empty.
 
 ```bash
 curl http://localhost:8787/v1/chat/completions \
@@ -84,26 +91,30 @@ curl http://localhost:8787/v1/chat/completions \
   }'
 ```
 
-Use a model supported by the provider selected by the configured key order. Since this initial version preserves the requested model name, a model unavailable on the first provider may return an upstream client error instead of trying other providers.
+Use a model supported by the configured provider. This initial version preserves the requested model name, so a model unavailable on the selected provider may return an upstream client error instead of trying another provider.
+
+## Environment variables
+
+- `PORT` — HTTP port (default `8787`).
+- `NODE_ENV` — set to `production` in production.
+- `GATEWAY_API_KEY` — long, random client key for the current single-key gateway authentication.
+- `GROQ_API_KEYS` — comma-separated Groq keys.
+- `OPENROUTER_API_KEYS` — comma-separated OpenRouter keys.
+- `GROQ_BASE_URL`, `OPENROUTER_BASE_URL` — optional provider base URLs (also used by automated mock tests).
+- `REQUEST_TIMEOUT_MS` — upstream request timeout.
+- `MAX_BODY_BYTES` — maximum JSON body size.
 
 ## Security notes
 
-- Put real provider keys only in local `.env` files or hosting-provider secret settings.
-- Set a strong, random `GATEWAY_API_KEY` before exposing the gateway to any network.
-- In production, the gateway refuses to serve protected chat requests if `GATEWAY_API_KEY` is not configured.
-- Avoid exposing this service publicly until you have rate limits, customer isolation, abuse controls, and usage/billing protections.
-- Failover does not create additional provider quota. Follow each provider's terms and limits.
+- Put real provider keys only in local `.env` files or your host's secret manager.
+- Never put provider secrets in browser JavaScript or the public repository.
+- Failover does not create additional provider quota or authorize bypassing provider limits. Follow provider terms.
+- Do not use the current shared gateway key as customer authentication for a public SaaS. Build individual customer credentials and quotas first.
 
 ## Deploy
 
-Deploy to a Node.js host that supports long-running HTTP servers. Configure the environment variables in the host's secret manager, run `npm run build`, then `npm start`. Serverless platforms may require adapting the server entry point to their runtime.
-
-## API
-
-- `GET /` — service information.
-- `GET /health` — health/configuration status.
-- `POST /v1/chat/completions` — chat completions proxy.
+The app serves the landing page and API from one Node.js process. Choose a host that supports long-running HTTP servers, configure environment variables securely, run `npm run build`, then `npm start`. Hosting costs, sleep behavior, limits, and availability depend on the selected provider and plan.
 
 ## License
 
-No license has been added yet. Add one before accepting external contributions or distributing the project.
+See the `LICENSE` file for the project's current license.
