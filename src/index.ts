@@ -133,7 +133,7 @@ app.get("/api/info", (_req, res) => {
       streaming: false,
       customerAccounts: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_PUBLISHABLE_KEY && process.env.SUPABASE_SECRET_KEY),
       customerApiKeys: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SECRET_KEY),
-      usageAnalytics: false,
+      usageAnalytics: true,
       subscriptions: false
     }
   });
