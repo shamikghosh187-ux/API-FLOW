@@ -49,6 +49,26 @@ test("root endpoint serves the API FLOW product website", async () => {
   assert.match(body, /Proposed plans/);
 });
 
+test("customer dashboard is served as a separate product page", async () => {
+  const response = await fetch(`${baseUrl}/dashboard.html`);
+  assert.equal(response.status, 200);
+  assert.ok(response.headers.get("content-type")?.includes("text/html"));
+  const body = await response.text();
+  assert.match(body, /API dashboard/);
+  assert.match(body, /Create account/);
+  assert.match(body, /Usage history/);
+});
+
+test("customer API keys are rejected when SaaS verification is not configured", async () => {
+  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: "Bearer af_live_invalid-test-key" },
+    body: JSON.stringify({ model: "test-model", messages: [{ role: "user", content: "hello" }] })
+  });
+  assert.equal(response.status, 401);
+  assert.equal((await response.json()).error.type, "authentication_error");
+});
+
 test("product info endpoint exposes current implementation status", async () => {
   const response = await fetch(`${baseUrl}/api/info`);
   assert.equal(response.status, 200);
