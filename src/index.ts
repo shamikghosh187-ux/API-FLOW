@@ -5,7 +5,7 @@ import helmet from "helmet";
 import pino from "pino";
 import pinoHttp from "pino-http";
 import { z } from "zod";
-import { createSaasRouter } from "./saas.js";
+import { createSaasRouter, verifyCustomerApiKey } from "./saas.js";
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? "info" });
 const app = express();
@@ -66,20 +66,38 @@ app.use(pinoHttp({ logger, redact: ["req.headers.authorization", "req.headers.x-
 // Serve the public product landing page while keeping the API endpoints on this same origin.
 app.use(express.static("public", { index: "index.html", maxAge: process.env.NODE_ENV === "production" ? "1h" : 0 }));
 
-function requireGatewayKey(req: Request, res: Response, next: NextFunction): void {
-  // Local development can run without a client key, but production must be configured.
+async function requireGatewayKey(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const auth = req.header("authorization") ?? "";
+  const bearer = auth.match(/^Bearer\s+(.+)$/i)?.[1] ?? req.header("x-api-key");
+
+  // Customer keys are hashed and verified against the dedicated SaaS database.
+  if (bearer?.startsWith("af_live_")) {
+    try {
+      const customer = await verifyCustomerApiKey(bearer);
+      if (!customer) {
+        res.status(401).json({ error: { message: "Invalid or revoked API FLOW customer key.", type: "authentication_error" } });
+        return;
+      }
+      res.locals.apiFlowCustomer = customer;
+      next();
+    } catch (error) {
+      logger.error({ err: error }, "Customer key verification failed");
+      res.status(503).json({ error: { message: "Customer key verification is temporarily unavailable.", type: "configuration_error" } });
+    }
+    return;
+  }
+
+  // Keep the single shared key for local development and controlled operator testing.
   if (!gatewayApiKey) {
     if (process.env.NODE_ENV === "production") {
-      res.status(503).json({ error: { message: "Gateway authentication is not configured.", type: "configuration_error" } });
+      res.status(503).json({ error: { message: "Customer API key or gateway authentication is not configured.", type: "configuration_error" } });
       return;
     }
     next();
     return;
   }
-  const auth = req.header("authorization") ?? "";
-  const bearer = auth.match(/^Bearer\s+(.+)$/i)?.[1] ?? req.header("x-api-key");
   if (!bearer || !safeEqual(bearer, gatewayApiKey)) {
-    res.status(401).json({ error: { message: "Invalid or missing API Flow key.", type: "authentication_error" } });
+    res.status(401).json({ error: { message: "Invalid or missing API FLOW key.", type: "authentication_error" } });
     return;
   }
   next();
