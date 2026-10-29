@@ -5,7 +5,7 @@ import helmet from "helmet";
 import pino from "pino";
 import pinoHttp from "pino-http";
 import { z } from "zod";
-import { createSaasRouter, recordCustomerUsage, verifyCustomerApiKey } from "./saas.js";
+import { checkCustomerQuota, createSaasRouter, recordCustomerUsage, verifyCustomerApiKey } from "./saas.js";
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? "info" });
 const app = express();
@@ -165,6 +165,40 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
       error: { message: "No providers configured. Add GROQ_API_KEYS and/or OPENROUTER_API_KEYS.", type: "configuration_error" }
     });
     return;
+  }
+
+  const customer = res.locals.apiFlowCustomer as { userId: string; keyId: string } | undefined;
+  if (customer) {
+    try {
+      const quota = await checkCustomerQuota(customer.userId);
+      if (quota.reason === "unavailable") {
+        res.status(503).json({ error: { message: "Usage controls are temporarily unavailable. Please retry shortly.", type: "quota_service_unavailable" } });
+        return;
+      }
+      if (!quota.allowed) {
+        res.setHeader("X-RateLimit-Limit", String(quota.limit));
+        res.setHeader("X-RateLimit-Remaining", "0");
+        res.setHeader("X-RateLimit-Reset", String(Math.floor(new Date(quota.resetsAt).getTime() / 1000)));
+        res.status(429).json({
+          error: {
+            message: "Daily API FLOW request allowance reached for your plan.",
+            type: "rate_limit_error",
+            plan: quota.plan,
+            limit: quota.limit,
+            used: quota.used,
+            resetsAt: quota.resetsAt
+          }
+        });
+        return;
+      }
+      res.setHeader("X-RateLimit-Limit", String(quota.limit));
+      res.setHeader("X-RateLimit-Remaining", String(Math.max(0, quota.limit - quota.used - 1)));
+      res.setHeader("X-RateLimit-Reset", String(Math.floor(new Date(quota.resetsAt).getTime() / 1000)));
+    } catch (quotaError) {
+      logger.error({ err: quotaError }, "Customer quota check failed");
+      res.status(503).json({ error: { message: "Usage controls are temporarily unavailable. Please retry shortly.", type: "quota_service_unavailable" } });
+      return;
+    }
   }
 
   const errors: Array<{ provider: ProviderName; status?: number; message: string }> = [];
