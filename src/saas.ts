@@ -1,10 +1,17 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomBytes } from "node:crypto";
-import { Router, type Request, type Response } from "express";
+import { Router, type NextFunction, type Request, type Response } from "express";
 import { z } from "zod";
 
 type AuthUser = { id: string; email?: string };
 type SaasRequest = Request & { saasUser?: AuthUser };
+
+type AsyncSaasHandler = (req: SaasRequest, res: Response) => Promise<void>;
+function asyncSaasRoute(handler: AsyncSaasHandler) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    void handler(req as SaasRequest, res).catch(next);
+  };
+}
 
 const signupSchema = z.object({
   email: z.string().email().max(320),
@@ -125,7 +132,7 @@ export function createSaasRouter(): Router {
     next();
   }
 
-  router.post("/signup", async (req, res) => {
+  router.post("/signup", asyncSaasRoute(async (req, res) => {
     const parsed = signupSchema.safeParse(req.body);
     if (!parsed.success) {
       publicError(res, 400, "Provide a valid email, a password of at least 10 characters, and an optional display name.");
@@ -155,9 +162,9 @@ export function createSaasRouter(): Router {
       session: data.session,
       emailConfirmationRequired: !data.session
     });
-  });
+  }));
 
-  router.post("/login", async (req, res) => {
+  router.post("/login", asyncSaasRoute(async (req, res) => {
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
       publicError(res, 400, "Provide a valid email and password.");
@@ -180,9 +187,9 @@ export function createSaasRouter(): Router {
       return;
     }
     res.json({ user: { id: data.user.id, email: data.user.email }, session: data.session });
-  });
+  }));
 
-  router.get("/me", requireUser, async (req: SaasRequest, res) => {
+  router.get("/me", requireUser, asyncSaasRoute(async (req: SaasRequest, res) => {
     const { data, error } = await admin.from("profiles")
       .select("id, display_name, plan, created_at")
       .eq("id", req.saasUser!.id).maybeSingle();
@@ -191,9 +198,9 @@ export function createSaasRouter(): Router {
       return;
     }
     res.json({ user: { id: req.saasUser!.id, email: req.saasUser!.email }, profile: data });
-  });
+  }));
 
-  router.get("/usage", requireUser, async (req: SaasRequest, res) => {
+  router.get("/usage", requireUser, asyncSaasRoute(async (req: SaasRequest, res) => {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await admin.from("usage_events")
       .select("id, api_key_id, provider, model, status_code, latency_ms, input_tokens, output_tokens, created_at")
@@ -226,9 +233,9 @@ export function createSaasRouter(): Router {
       totalOutputTokens: events.reduce((sum, event) => sum + (event.output_tokens ?? 0), 0),
       events
     });
-  });
+  }));
 
-  router.get("/keys", requireUser, async (req: SaasRequest, res) => {
+  router.get("/keys", requireUser, asyncSaasRoute(async (req: SaasRequest, res) => {
     const { data, error } = await admin.from("api_keys")
       .select("id, name, key_prefix, last_used_at, expires_at, revoked_at, created_at")
       .eq("user_id", req.saasUser!.id).order("created_at", { ascending: false }).limit(100);
@@ -237,9 +244,9 @@ export function createSaasRouter(): Router {
       return;
     }
     res.json({ keys: data ?? [] });
-  });
+  }));
 
-  router.post("/keys", requireUser, async (req: SaasRequest, res) => {
+  router.post("/keys", requireUser, asyncSaasRoute(async (req: SaasRequest, res) => {
     const parsed = createKeySchema.safeParse(req.body);
     if (!parsed.success) {
       publicError(res, 400, "Key name must be between 1 and 80 characters.");
@@ -270,9 +277,9 @@ export function createSaasRouter(): Router {
     res.status(201).json({
       key: { ...data, secret, warning: "Copy this secret now. It cannot be shown again." }
     });
-  });
+  }));
 
-  router.delete("/keys/:id", requireUser, async (req: SaasRequest, res) => {
+  router.delete("/keys/:id", requireUser, asyncSaasRoute(async (req: SaasRequest, res) => {
     const id = z.string().uuid().safeParse(req.params.id);
     if (!id.success) {
       publicError(res, 400, "Invalid API key ID.");
@@ -291,7 +298,7 @@ export function createSaasRouter(): Router {
       return;
     }
     res.json({ revoked: true, id: data.id });
-  });
+  }));
 
   return router;
 }
