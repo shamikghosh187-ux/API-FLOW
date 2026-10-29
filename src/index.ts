@@ -61,6 +61,8 @@ app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN?.split(",").map((x) => x.trim()) ?? false }));
 app.use(express.json({ limit: maxBodyBytes }));
 app.use(pinoHttp({ logger, redact: ["req.headers.authorization", "req.headers.x-api-key"] }));
+// Serve the public product landing page while keeping the API endpoints on this same origin.
+app.use(express.static("public", { index: "index.html", maxAge: process.env.NODE_ENV === "production" ? "1h" : 0 }));
 
 function requireGatewayKey(req: Request, res: Response, next: NextFunction): void {
   // Local development can run without a client key, but production must be configured.
@@ -73,7 +75,7 @@ function requireGatewayKey(req: Request, res: Response, next: NextFunction): voi
     return;
   }
   const auth = req.header("authorization") ?? "";
-  const bearer = auth.match(/^Bearer\s+(.+)$/i)?.[1] ?? req.header("x-api-key");
+  const bearer = auth.match(/^Bearer\\s+(.+)$/i)?.[1] ?? req.header("x-api-key");
   if (!bearer || !safeEqual(bearer, gatewayApiKey)) {
     res.status(401).json({ error: { message: "Invalid or missing API Flow key.", type: "authentication_error" } });
     return;
@@ -82,7 +84,6 @@ function requireGatewayKey(req: Request, res: Response, next: NextFunction): voi
 }
 
 function safeEqual(a: string, b: string): boolean {
-  // Compare equal-length buffers without a content-dependent early exit.
   const left = Buffer.from(a);
   const right = Buffer.from(b);
   if (left.length !== right.length) return false;
@@ -103,11 +104,17 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.get("/", (_req, res) => {
+app.get("/api/info", (_req, res) => {
   res.json({
-    name: "API Flow",
+    name: "API FLOW",
     description: "OpenAI-compatible API gateway with provider and API-key failover.",
-    endpoints: { health: "/health", chatCompletions: "POST /v1/chat/completions" }
+    endpoints: { health: "/health", chatCompletions: "POST /v1/chat/completions" },
+    features: {
+      streaming: false,
+      customerAccounts: false,
+      usageAnalytics: false,
+      subscriptions: false
+    }
   });
 });
 
@@ -140,7 +147,6 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
   }
 
   const errors: Array<{ provider: ProviderName; status?: number; message: string }> = [];
-  // Try each configured key exactly once per request, preserving provider order.
   const attempts = available.flatMap((provider) =>
     provider.keys.map((key, keyIndex) => ({ provider, key, keyIndex }))
   );
@@ -174,8 +180,7 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
       }
 
       const bodyText = await upstream.text();
-      const safeMessage = bodyText.slice(0, 1_000);
-      errors.push({ provider: attempt.provider.name, status: upstream.status, message: safeMessage });
+      errors.push({ provider: attempt.provider.name, status: upstream.status, message: bodyText.slice(0, 1_000) });
       logger.warn({
         provider: attempt.provider.name,
         keyIndex: attempt.keyIndex,
@@ -183,8 +188,6 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
         status: upstream.status
       }, "Upstream request failed");
 
-      // Fail over on auth, rate limits, server errors, and transient gateway errors.
-      // Other client errors (for example an invalid model) are unlikely to improve with another key.
       if (![401, 403, 408, 429, 500, 502, 503, 504].includes(upstream.status)) {
         res.status(upstream.status).json({
           error: { message: "The provider rejected the request.", type: "upstream_error", provider: attempt.provider.name, status: upstream.status }
