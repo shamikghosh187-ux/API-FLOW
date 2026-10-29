@@ -14,10 +14,11 @@ API Flow is a lightweight, self-hostable gateway that accepts an OpenAI-compatib
 - Health endpoint that reports provider configuration without exposing keys.
 - Request timeout and body-size limit.
 - TypeScript build and development scripts.
+- Automated HTTP tests for health, service info, validation, missing-provider handling, and malformed JSON.
 
 ## Not implemented yet
 
-Streaming responses, durable usage analytics, a web dashboard, customer accounts, per-customer quotas/billing, model-aware routing, persistent provider health/cooldowns, and automated integration tests are future milestones. Do not treat this initial gateway as a fully managed production SaaS.
+Streaming responses, live-provider failover integration tests, durable usage analytics, a web dashboard, customer accounts, per-customer quotas/billing, model-aware routing, persistent provider health/cooldowns, and automated integration tests are future milestones. Do not treat this initial gateway as a fully managed production SaaS.
 
 ## Requirements
 
@@ -57,6 +58,16 @@ Streaming responses, durable usage analytics, a web dashboard, customer accounts
    ```bash
    curl http://localhost:8787/health
    ```
+
+## Tests
+
+Run the automated build and HTTP tests with:
+
+```bash
+npm test
+```
+
+These tests use no real provider API keys and do not prove live upstream failover. A separate integration test with authorized provider credentials is still needed.
 
 ## Example request
 
