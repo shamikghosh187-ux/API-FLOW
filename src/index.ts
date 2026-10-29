@@ -5,6 +5,7 @@ import helmet from "helmet";
 import pino from "pino";
 import pinoHttp from "pino-http";
 import { z } from "zod";
+import { createSaasRouter } from "./saas.js";
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? "info" });
 const app = express();
@@ -60,6 +61,7 @@ app.disable("x-powered-by");
 app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN?.split(",").map((x) => x.trim()) ?? false }));
 app.use(express.json({ limit: maxBodyBytes }));
+app.use("/api/saas", createSaasRouter());
 app.use(pinoHttp({ logger, redact: ["req.headers.authorization", "req.headers.x-api-key"] }));
 // Serve the public product landing page while keeping the API endpoints on this same origin.
 app.use(express.static("public", { index: "index.html", maxAge: process.env.NODE_ENV === "production" ? "1h" : 0 }));
@@ -111,7 +113,7 @@ app.get("/api/info", (_req, res) => {
     endpoints: { health: "/health", chatCompletions: "POST /v1/chat/completions" },
     features: {
       streaming: false,
-      customerAccounts: false,
+      customerAccounts: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_PUBLISHABLE_KEY && process.env.SUPABASE_SECRET_KEY),
       usageAnalytics: false,
       subscriptions: false
     }
