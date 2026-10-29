@@ -76,6 +76,8 @@ test("product info endpoint exposes current implementation status", async () => 
   assert.equal(body.name, "API FLOW");
   assert.equal(body.features.customerAccounts, false);
   assert.equal(body.features.subscriptions, false);
+  assert.equal(body.features.dailyRequestQuotas, false);
+  assert.deepEqual(body.limits.dailyRequests, { free: 100, pro: 1000, business: 5000 });
 });
 
 test("health endpoint reports configured state without secrets", async () => {
