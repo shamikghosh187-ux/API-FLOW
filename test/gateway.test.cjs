@@ -43,7 +43,7 @@ after(() => {
 test("root endpoint serves the API FLOW product website", async () => {
   const response = await fetch(baseUrl);
   assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type"), /text\\/html/);
+  assert.ok(response.headers.get("content-type")?.includes("text/html"));
   const body = await response.text();
   assert.match(body, /One endpoint/);
   assert.match(body, /Proposed plans/);
