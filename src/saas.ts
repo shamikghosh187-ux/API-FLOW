@@ -25,7 +25,23 @@ function publicError(res: Response, status: number, message: string): void {
   res.status(status).json({ error: { message } });
 }
 
-export async function verifyCustomerApiKey(rawKey: string): Promise<{ userId: string; keyId: string } | null> {\n  const url = process.env.SUPABASE_URL?.trim();\n  const secretKey = process.env.SUPABASE_SECRET_KEY?.trim();\n  if (!url || !secretKey || !rawKey.startsWith("af_live_")) return null;\n  const admin = createClient(url, secretKey, { auth: { autoRefreshToken: false, persistSession: false } });\n  const keyHash = hashKey(rawKey);\n  const { data, error } = await admin.from("api_keys")\n    .select("id, user_id")\n    .eq("key_hash", keyHash).is("revoked_at", null)\n    .or("expires_at.is.null,expires_at.gt." + new Date().toISOString())\n    .maybeSingle();\n  if (error || !data) return null;\n  void admin.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", data.id);\n  return { userId: data.user_id, keyId: data.id };\n}\n\nexport function createSaasRouter(): Router {
+export async function verifyCustomerApiKey(rawKey: string): Promise<{ userId: string; keyId: string } | null> {
+  const url = process.env.SUPABASE_URL?.trim();
+  const secretKey = process.env.SUPABASE_SECRET_KEY?.trim();
+  if (!url || !secretKey || !rawKey.startsWith("af_live_")) return null;
+  const admin = createClient(url, secretKey, { auth: { autoRefreshToken: false, persistSession: false } });
+  const keyHash = hashKey(rawKey);
+  const { data, error } = await admin.from("api_keys")
+    .select("id, user_id")
+    .eq("key_hash", keyHash).is("revoked_at", null)
+    .or("expires_at.is.null,expires_at.gt." + new Date().toISOString())
+    .maybeSingle();
+  if (error || !data) return null;
+  void admin.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", data.id);
+  return { userId: data.user_id, keyId: data.id };
+}
+
+export function createSaasRouter(): Router {
   const router = Router();
   const url = process.env.SUPABASE_URL?.trim();
   const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY?.trim();
