@@ -171,7 +171,7 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
   if (customer) {
     try {
       const quota = await checkCustomerQuota(customer.userId);
-      if (quota.reason === "unavailable") {
+      if (!quota.allowed && quota.reason === "unavailable") {
         res.status(503).json({ error: { message: "Usage controls are temporarily unavailable. Please retry shortly.", type: "quota_service_unavailable" } });
         return;
       }
