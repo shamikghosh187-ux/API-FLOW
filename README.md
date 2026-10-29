@@ -6,11 +6,13 @@ API FLOW is an early-stage, self-hostable OpenAI-compatible gateway. It forwards
 
 ## Current capabilities
 
-- Public product landing page served from `public/index.html`.
+- Public product landing page served from `public/index.html`, with a customer console at `public/dashboard.html`.
 - OpenAI-compatible `POST /v1/chat/completions` endpoint.
 - Multiple Groq keys and OpenRouter keys configured server-side.
 - Sequential provider/key failover for selected transient errors.
-- Shared operator key authentication for controlled testing, plus individual customer API-key verification when Supabase server credentials are configured.\n- Supabase-backed signup/login endpoints, account profile lookup, and customer API-key create/list/revoke endpoints.
+- Shared operator key authentication for controlled testing, plus individual customer API-key verification when Supabase server credentials are configured.
+- Supabase-backed signup/login endpoints, account profile lookup, and customer API-key create/list/revoke endpoints.
+- Customer dashboard for key management and recent usage summaries.
 - Request validation, request timeout, body-size limit, Helmet security headers, and redacted authorization logs.
 - `GET /health` endpoint showing whether provider keys are configured without revealing them.
 - `GET /api/info` endpoint describing current implementation status.
@@ -20,16 +22,16 @@ API FLOW is an early-stage, self-hostable OpenAI-compatible gateway. It forwards
 
 A starter Supabase migration is available at `supabase/migrations/202610290001_api_flow_saas_foundation.sql`. It defines customer profiles, hashed customer API-key records, request usage events, indexes, and restrictive row-level security policies.
 
-The migration is applied to the dedicated API FLOW Supabase project. The server now includes initial signup/login, profile lookup, and customer API-key create/list/revoke routes. API key secrets are returned once and only hashes are stored. Customer keys can authenticate gateway requests. This is still an early foundation: usage metering, enforced request quotas, a customer-facing dashboard, email verification UX, abuse protection, and production tests remain to be completed. Browser clients cannot directly read or write API-key or usage-event records.
+The migration is applied to the dedicated API FLOW Supabase project. The server includes signup/login, profile lookup, customer API-key create/list/revoke routes, usage event recording for customer-key gateway requests, and a `/api/saas/usage` endpoint. The dashboard lets customers manage keys and inspect recent request records. API key secrets are returned once and only hashes are stored. Browser clients cannot directly read or write API-key or usage-event records. This is still an early foundation: enforced request quotas, billing, robust rate limiting/abuse protection, email verification UX, and production tests remain to be completed.
 
 ## Important: what is not implemented yet
 
 The website includes **proposed** Free, Pro, and Business plans for product direction only. They are not purchasable plans and do not represent a live subscription service.
 
 Not implemented yet:
-- Customer registration, login, or individual customer accounts.
-- Per-customer gateway keys, tenant isolation, and usage quotas.
-- Persistent request analytics or a customer dashboard backed by real usage data.
+- Enforced per-customer request/token quotas and plan-based limits.
+- Billing, subscription management, and payment enforcement.
+- Production-grade rate limiting and abuse protection.
 - Payments, subscription management, invoicing, or billing enforcement.
 - Streaming responses.
 - Production-grade persistent provider health and cooldown management.
@@ -70,7 +72,7 @@ Do not expose this early gateway as a public multi-customer API service until cu
    npm run dev
    ```
 
-5. Open `http://localhost:8787` to view the website, or `http://localhost:8787/health` to check the gateway.
+5. Open `http://localhost:8787` to view the website, `http://localhost:8787/dashboard.html` for the customer console, or `http://localhost:8787/health` to check the gateway.
 
 ## Tests
 
@@ -82,7 +84,19 @@ npm test
 
 Tests use no real provider API keys. The failover test uses a mock upstream; it does not establish live provider availability or guarantee production reliability.
 
-## SaaS API routes\n\n- `POST /api/saas/signup` — JSON `{ "email", "password", "displayName?" }` (password minimum 10 characters).\n- `POST /api/saas/login` — JSON `{ "email", "password" }`.\n- `GET /api/saas/me` — requires `Authorization: Bearer <Supabase access token>`.\n- `GET /api/saas/keys` — list your own key metadata (never returns stored secrets).\n- `POST /api/saas/keys` — JSON `{ "name": "My app" }`; returns the new secret once.\n- `DELETE /api/saas/keys/:id` — revoke an active key owned by the signed-in user.\n\nCustomer gateway keys start with `af_live_`. Set the three Supabase environment variables above on the server before these routes will work. The publishable key is not a secret; the Supabase secret key is server-only. Email confirmation settings in Supabase Auth may require users to confirm email before login.\n\n## Example request
+## SaaS API routes
+
+- `POST /api/saas/signup` — JSON `{ "email", "password", "displayName?" }` (password minimum 10 characters).
+- `POST /api/saas/login` — JSON `{ "email", "password" }`.
+- `GET /api/saas/me` — requires `Authorization: Bearer <Supabase access token>`.
+- `GET /api/saas/keys` — list your own key metadata (never returns stored secrets).
+- `GET /api/saas/usage` — usage totals and recent request records for the last 30 days (up to 500 records).
+- `POST /api/saas/keys` — JSON `{ "name": "My app" }`; returns the new secret once.
+- `DELETE /api/saas/keys/:id` — revoke an active key owned by the signed-in user.
+
+Customer gateway keys start with `af_live_`. Set the three Supabase environment variables above on the server before these routes will work. The publishable key is not a secret; the Supabase secret key is server-only. Email confirmation settings in Supabase Auth may require users to confirm email before login.
+
+## Example request
 
 Replace `YOUR_GATEWAY_KEY` with the value of `GATEWAY_API_KEY` if you configured one. In local development, the key is optional when the variable is empty.
 
@@ -103,7 +117,10 @@ Use a model supported by the configured provider. This initial version preserves
 
 - `PORT` — HTTP port (default `8787`).
 - `NODE_ENV` — set to `production` in production.
-- `GATEWAY_API_KEY` — long, random operator key for controlled testing.\n- `SUPABASE_URL` — URL of the dedicated API FLOW Supabase project.\n- `SUPABASE_PUBLISHABLE_KEY` — Supabase publishable key used for Auth signup/login.\n- `SUPABASE_SECRET_KEY` — server-only Supabase secret key; never expose it to the browser or commit real values.
+- `GATEWAY_API_KEY` — long, random operator key for controlled testing.
+- `SUPABASE_URL` — URL of the dedicated API FLOW Supabase project.
+- `SUPABASE_PUBLISHABLE_KEY` — Supabase publishable key used for Auth signup/login.
+- `SUPABASE_SECRET_KEY` — server-only Supabase secret key; never expose it to the browser or commit real values.
 - `GROQ_API_KEYS` — comma-separated Groq keys.
 - `OPENROUTER_API_KEYS` — comma-separated OpenRouter keys.
 - `GROQ_BASE_URL`, `OPENROUTER_BASE_URL` — optional provider base URLs (also used by automated mock tests).
