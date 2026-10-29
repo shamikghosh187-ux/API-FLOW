@@ -181,7 +181,7 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
         res.status(503).json({ error: { message: "Usage controls are temporarily unavailable. Please retry shortly.", type: "quota_service_unavailable" } });
         return;
       }
-      if (!quota.allowed) {
+      if (!quota.allowed && quota.reason === "limit") {
         res.setHeader("X-RateLimit-Limit", String(quota.limit));
         res.setHeader("X-RateLimit-Remaining", "0");
         res.setHeader("X-RateLimit-Reset", String(Math.floor(new Date(quota.resetsAt).getTime() / 1000)));
@@ -289,11 +289,11 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
   }
 
   const rateLimited = errors.some((error) => error.status === 429);
-  const customer = res.locals.apiFlowCustomer as { userId: string; keyId: string } | undefined;
-  if (customer) {
+  const failedRequestCustomer = res.locals.apiFlowCustomer as { userId: string; keyId: string } | undefined;
+  if (failedRequestCustomer) {
     try {
       await recordCustomerUsage({
-        ...customer,
+        ...failedRequestCustomer,
         provider: errors.at(-1)?.provider ?? "other",
         model: parsed.data.model,
         statusCode: 502
