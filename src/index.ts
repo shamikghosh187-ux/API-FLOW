@@ -177,11 +177,11 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
   if (customer) {
     try {
       const quota = await checkCustomerQuota(customer.userId);
-      if (!quota.allowed && quota.reason === "unavailable") {
-        res.status(503).json({ error: { message: "Usage controls are temporarily unavailable. Please retry shortly.", type: "quota_service_unavailable" } });
-        return;
-      }
-      if (!quota.allowed && quota.reason === "limit" && quota.resetsAt !== undefined && quota.limit !== undefined && quota.plan !== undefined && quota.used !== undefined) {
+      if (!quota.allowed) {
+        if (quota.reason === "unavailable") {
+          res.status(503).json({ error: { message: "Usage controls are temporarily unavailable. Please retry shortly.", type: "quota_service_unavailable" } });
+          return;
+        }
         res.setHeader("X-RateLimit-Limit", String(quota.limit));
         res.setHeader("X-RateLimit-Remaining", "0");
         res.setHeader("X-RateLimit-Reset", String(Math.floor(new Date(quota.resetsAt).getTime() / 1000)));
