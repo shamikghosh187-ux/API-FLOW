@@ -7,6 +7,13 @@ type AuthUser = { id: string; email?: string };
 type SaasRequest = Request & { saasUser?: AuthUser };
 
 type AsyncSaasHandler = (req: SaasRequest, res: Response) => Promise<void>;
+type AsyncSaasMiddleware = (req: SaasRequest, res: Response, next: NextFunction) => Promise<void>;
+function asyncSaasMiddleware(handler: AsyncSaasMiddleware) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    void handler(req as SaasRequest, res, next).catch(next);
+  };
+}
+
 function asyncSaasRoute(handler: AsyncSaasHandler) {
   return (req: Request, res: Response, next: NextFunction): void => {
     void handler(req as SaasRequest, res).catch(next);
@@ -117,7 +124,7 @@ export function createSaasRouter(): Router {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
   });
 
-  async function requireUser(req: SaasRequest, res: Response, next: (error?: unknown) => void): Promise<void> {
+  async function requireUser(req: SaasRequest, res: Response, next: NextFunction): Promise<void> {
     const token = req.header("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
     if (!token) {
       publicError(res, 401, "Sign in first.");
@@ -189,7 +196,7 @@ export function createSaasRouter(): Router {
     res.json({ user: { id: data.user.id, email: data.user.email }, session: data.session });
   }));
 
-  router.get("/me", requireUser, asyncSaasRoute(async (req: SaasRequest, res) => {
+  router.get("/me", asyncSaasMiddleware(requireUser), asyncSaasRoute(async (req: SaasRequest, res) => {
     const { data, error } = await admin.from("profiles")
       .select("id, display_name, plan, created_at")
       .eq("id", req.saasUser!.id).maybeSingle();
@@ -200,7 +207,7 @@ export function createSaasRouter(): Router {
     res.json({ user: { id: req.saasUser!.id, email: req.saasUser!.email }, profile: data });
   }));
 
-  router.get("/usage", requireUser, asyncSaasRoute(async (req: SaasRequest, res) => {
+  router.get("/usage", asyncSaasMiddleware(requireUser), asyncSaasRoute(async (req: SaasRequest, res) => {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await admin.from("usage_events")
       .select("id, api_key_id, provider, model, status_code, latency_ms, input_tokens, output_tokens, created_at")
@@ -235,7 +242,7 @@ export function createSaasRouter(): Router {
     });
   }));
 
-  router.get("/keys", requireUser, asyncSaasRoute(async (req: SaasRequest, res) => {
+  router.get("/keys", asyncSaasMiddleware(requireUser), asyncSaasRoute(async (req: SaasRequest, res) => {
     const { data, error } = await admin.from("api_keys")
       .select("id, name, key_prefix, last_used_at, expires_at, revoked_at, created_at")
       .eq("user_id", req.saasUser!.id).order("created_at", { ascending: false }).limit(100);
@@ -246,7 +253,7 @@ export function createSaasRouter(): Router {
     res.json({ keys: data ?? [] });
   }));
 
-  router.post("/keys", requireUser, asyncSaasRoute(async (req: SaasRequest, res) => {
+  router.post("/keys", asyncSaasMiddleware(requireUser), asyncSaasRoute(async (req: SaasRequest, res) => {
     const parsed = createKeySchema.safeParse(req.body);
     if (!parsed.success) {
       publicError(res, 400, "Key name must be between 1 and 80 characters.");
@@ -279,7 +286,7 @@ export function createSaasRouter(): Router {
     });
   }));
 
-  router.delete("/keys/:id", requireUser, asyncSaasRoute(async (req: SaasRequest, res) => {
+  router.delete("/keys/:id", asyncSaasMiddleware(requireUser), asyncSaasRoute(async (req: SaasRequest, res) => {
     const id = z.string().uuid().safeParse(req.params.id);
     if (!id.success) {
       publicError(res, 400, "Invalid API key ID.");
