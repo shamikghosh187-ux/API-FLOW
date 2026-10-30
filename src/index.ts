@@ -65,6 +65,8 @@ app.use("/api/saas", createSaasRouter());
 app.use(pinoHttp({ logger, redact: ["req.headers.authorization", "req.headers.x-api-key"] }));
 // Serve the public product landing page while keeping the API endpoints on this same origin.
 app.use(express.static("public", { index: "index.html", maxAge: process.env.NODE_ENV === "production" ? "1h" : 0 }));
+// Open the developer dashboard at the root URL instead of returning Express "Cannot GET /".
+app.get("/", (_req, res) => res.redirect(302, "/dashboard.html"));
 
 async function requireGatewayKey(req: Request, res: Response, next: NextFunction): Promise<void> {
   const auth = req.header("authorization") ?? "";
