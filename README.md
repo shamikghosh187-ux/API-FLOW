@@ -143,3 +143,17 @@ The app serves the landing page and API from one Node.js process. Choose a host 
 ## License
 
 See the `LICENSE` file for the project's current license.
+
+
+## BYOK platform direction
+
+API FLOW is being developed as a **bring-your-own-key (BYOK)** gateway: users connect their own upstream provider accounts and remain responsible for provider inference charges. API FLOW must not silently fall back to platform-owned inference credentials. Infrastructure, storage, telemetry, and hosting still have operating costs.
+
+- [Production architecture blueprint](docs/PRODUCTION_ARCHITECTURE.md) — data-plane/control-plane boundaries, routing, failover, security, observability, scaling, API surface, deployment and acceptance gates.
+- [BYOK control-plane migration](supabase/migrations/202610300001_byok_control_plane.sql) — initial schema for organizations, provider credential ciphertext metadata, pools, versioned routing policies, gateway tokens, request attempts, health and audit events.
+
+### Important deployment notes
+
+The migration defines storage structures and baseline read policies; it does **not** implement the full encrypted credential lifecycle or all control-plane endpoints by itself. Apply it only after reviewing it against your current Supabase schema and taking a backup. Do not enable user-managed provider secrets in production until the backend has KMS/Vault-backed envelope encryption, authorized decrypt paths, tenant isolation tests, rotation, redaction tests, and revocation behavior.
+
+The architecture blueprint is a target contract, not a statement that Kubernetes, Redis, all listed provider adapters, streaming, multi-region failover, billing, SSO/MFA, or enterprise analytics are already implemented. Check the API responses and test results for actual current capabilities.
