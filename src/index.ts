@@ -25,17 +25,33 @@ function parseKeys(value: string | undefined): string[] {
   return (value ?? "").split(",").map((key) => key.trim()).filter(Boolean);
 }
 
+/**
+ * Accept the documented comma-separated pool plus common single-key and numbered
+ * Vercel environment-variable patterns. Values remain server-side and are never
+ * included in health responses or logs.
+ */
+function collectKeys(poolName: string, singularName: string): string[] {
+  const keys = [
+    ...parseKeys(process.env[poolName]),
+    ...parseKeys(process.env[singularName])
+  ];
+  for (let index = 1; index <= 20; index++) {
+    keys.push(...parseKeys(process.env[`${singularName}_${index}`]));
+  }
+  return [...new Set(keys)];
+}
+
 const providers: Provider[] = [
   {
     name: "groq",
     baseUrl: process.env.GROQ_BASE_URL?.trim() || "https://api.groq.com/openai/v1",
-    keys: parseKeys(process.env.GROQ_API_KEYS),
+    keys: collectKeys("GROQ_API_KEYS", "GROQ_API_KEY"),
     headers: {}
   },
   {
     name: "openrouter",
     baseUrl: process.env.OPENROUTER_BASE_URL?.trim() || "https://openrouter.ai/api/v1",
-    keys: parseKeys(process.env.OPENROUTER_API_KEYS),
+    keys: collectKeys("OPENROUTER_API_KEYS", "OPENROUTER_API_KEY"),
     headers: {
       ...(process.env.OPENROUTER_HTTP_REFERER ? { "HTTP-Referer": process.env.OPENROUTER_HTTP_REFERER } : {}),
       ...(process.env.OPENROUTER_APP_TITLE ? { "X-Title": process.env.OPENROUTER_APP_TITLE } : {})
@@ -171,7 +187,7 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
   const available = providers.filter((provider) => provider.keys.length > 0);
   if (!available.length) {
     res.status(503).json({
-      error: { message: "No providers configured. Add GROQ_API_KEYS and/or OPENROUTER_API_KEYS.", type: "configuration_error" }
+      error: { message: "No providers configured. Set GROQ_API_KEYS or GROQ_API_KEY (optionally GROQ_API_KEY_1 through GROQ_API_KEY_20), or the equivalent OPENROUTER variables in the production environment, then redeploy.", type: "configuration_error" }
     });
     return;
   }
