@@ -121,8 +121,10 @@ Use a model supported by the configured provider. This initial version preserves
 - `SUPABASE_URL` — URL of the dedicated API FLOW Supabase project.
 - `SUPABASE_PUBLISHABLE_KEY` — Supabase publishable key used for Auth signup/login.
 - `SUPABASE_SECRET_KEY` — server-only Supabase secret key; never expose it to the browser or commit real values.
-- `GROQ_API_KEYS` — comma-separated Groq keys.
-- `OPENROUTER_API_KEYS` — comma-separated OpenRouter keys.
+- `GROQ_API_KEYS` — comma-separated Groq key pool. Also accepts `GROQ_API_KEY` and `GROQ_API_KEY_1` through `GROQ_API_KEY_20` for hosting dashboards that store each key separately.
+- `OPENROUTER_API_KEYS` — comma-separated OpenRouter key pool. Also accepts `OPENROUTER_API_KEY` and `OPENROUTER_API_KEY_1` through `OPENROUTER_API_KEY_20`.
+
+Provider keys are de-duplicated at startup. `/health` reports configured key counts only and never returns secret values. Environment-variable changes on Vercel require a new deployment to take effect.
 - `GROQ_BASE_URL`, `OPENROUTER_BASE_URL` — optional provider base URLs (also used by automated mock tests).
 - `REQUEST_TIMEOUT_MS` — upstream request timeout.
 - `MAX_BODY_BYTES` — maximum JSON body size.
