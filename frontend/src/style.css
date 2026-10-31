@@ -11,55 +11,61 @@
 
 /* API FLOW crimson console theme — appended override */
 :root{
- color:#f5f3f5;background:#080608;
- --bg:#080608;--panel:#120b10;--line:#3a1723;--text:#f5f3f5;--muted:#b49aa3;
- --lime:#ff244f;--violet:#ff526f;--mono:'DM Mono',monospace;
+ color:#f4f7f1;background:#070907;
+ --bg:#070907;--panel:#101510;--line:#283529;--text:#f4f7f1;--muted:#9aa89a;
+ --lime:#c4ff68;--violet:#a99bff;--mono:'DM Mono',monospace;
 }
-body,.app-shell{background:#080608;color:#f5f3f5}
-.app-shell{background-image:radial-gradient(ellipse at 82% 0%,#6e10251c,transparent 38%),radial-gradient(ellipse at 0% 100%,#8f10201a,transparent 38%)}
-.sidebar{background:linear-gradient(180deg,#10090d 0%,#0b070a 100%);border-right-color:#3b1724;box-shadow:10px 0 45px #0003}
-.app-mark,.mark{background:#ff244f;color:#fff;box-shadow:0 0 28px #ff244f35}
-.workspace-avatar,.profile-avatar,.user-dot{background:linear-gradient(145deg,#ff244f,#8e102b);color:#fff}
-.workspace-switch,.plan-card,.panel,.metric-card,.quick-item,.coming-panel{background:linear-gradient(145deg,#170d12,#10090d);border-color:#3b1724}
-.workspace-switch:hover,.nav-item:hover,.quick-item:hover{background:#261019;border-color:#672037}
-.nav-label,.breadcrumbs,.page-heading p,.metric-detail,.provider-meta small,.health-desc,.muted-note,.app-footer{color:#b49aa3}
-.nav-item{color:#cbb9bf}
-.nav-active{background:linear-gradient(90deg,#4a1023,#260c16);color:#fff;border:1px solid #7b1b35;box-shadow:inset 3px 0 #ff244f}
-.nav-active svg,.nav-item:hover svg,.eyebrow-dot,.status-good i,.connection-pill i,.status-good{color:#ff4167}
-.primary-button,.plan-card button{background:linear-gradient(135deg,#ff244f,#c61039);border-color:#ff4167;color:white;box-shadow:0 7px 24px #ff244f1c}
-.primary-button:hover,.plan-card button:hover{background:linear-gradient(135deg,#ff4267,#e31845);box-shadow:0 10px 28px #ff244f2c}
-.subtle-button,.icon-button,.row-more{background:#1a0d13;border-color:#482031;color:#e5d6dc}
-.subtle-button:hover,.icon-button:hover{border-color:#b52549;color:#fff}
-.metric-icon.green,.text-green,.health-orb.orb-green,.status-good{color:#ff4267}
-.metric-icon.green{background:#ff244f17}
-.metric-icon.violet{color:#ff6683;background:#ff244f17}
-.metric-icon.amber{color:#ff9c70;background:#ff6a3d16}
-.metric-icon.muted{color:#b49aa3;background:#ffffff08}
-.metric-value{color:#fff}
-.panel-heading{border-bottom-color:#3b1724}
-.provider-logo{background:#28101a;border-color:#612039;color:#ff5b7a}
-.provider-logo.Groq,.provider-logo.groq,.provider-logo.OpenRouter,.provider-logo.openrouter{background:#2a1019;color:#ff5275}
-.status-badge.status-good,.mini-green{background:#ff244f14;border-color:#ff244f48;color:#ff6683}
-.status-badge.status-idle,.mini-status{background:#ffffff05;border-color:#482031;color:#b49aa3}
-.health-orb.orb-green{background:#ff244f15;border-color:#ff244f3b}
-.health-callout,.notice-banner,.error-banner,.env-guide{background:#1c0c13;border-color:#5c1a30}
-.health-callout svg,.notice-banner>svg,.error-banner>svg{color:#ff4167}
-.search-box{background:#10090d;border-color:#482031}
-.search-box input{color:#fff}
-.search-box:focus-within{border-color:#ff4167;box-shadow:0 0 0 3px #ff244f15}
-.directory-item{background:#140b10;border-color:#3b1724}
-.empty-state{color:#b49aa3}
-.empty-icon,.coming-icon,.quick-icon,.plan-icon{background:#ff244f16;color:#ff4167;border-color:#692039}
-.status-checklist{border-color:#3b1724}
-.status-checklist>div svg{color:#ff4167}
-.status-checklist .pending-check svg{color:#c08b99}
-.app-footer{border-top-color:#3b1724}
-.app-footer i{color:#ff4167}
-.connection-pill{color:#ff6683;background:#ff244f12;border-color:#6b1d34}
-.connection-pill i,.eyebrow-dot{background:#ff244f;box-shadow:0 0 10px #ff244f90}
-.connection-error{color:#ff9b85;background:#ff6a3d0c;border-color:#71311f}
-.error-banner button{color:#ff6683}
-.toast{background:#1c0c13;border-color:#79213a;color:#fff}
-a:hover{color:#ff6683}
-button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid #ff4167;outline-offset:3px}
-@media(max-width:760px){.sidebar{box-shadow:20px 0 60px #0009}.mobile-backdrop{background:#080608d9}}
+body,.app-shell{background:#070907;color:#f4f7f1}
+.app-shell{background-image:radial-gradient(ellipse at 82% 0%,#9bdc5812,transparent 38%),radial-gradient(ellipse at 0% 100%,#8f7dff0b,transparent 38%)}
+.sidebar{background:linear-gradient(180deg,#0d120d 0%,#080b08 100%);border-right-color:#263426;box-shadow:10px 0 45px #0005}
+.app-mark,.mark{background:#c4ff68;color:#10170b;box-shadow:0 0 28px #c4ff6825}
+.workspace-avatar,.profile-avatar,.user-dot{background:linear-gradient(145deg,#c4ff68,#75ad3e);color:#10170b}
+.workspace-switch,.plan-card,.panel,.metric-card,.quick-item,.coming-panel{background:linear-gradient(145deg,#121812,#0c100c);border-color:#283529}
+.workspace-switch:hover,.nav-item:hover,.quick-item:hover{background:#1b251a;border-color:#48633b}
+.nav-label,.breadcrumbs,.page-heading p,.metric-detail,.provider-meta small,.health-desc,.muted-note,.app-footer{color:#9aa89a}
+.nav-item{color:#c1cdbf}
+.nav-active{background:linear-gradient(90deg,#263b20,#182717);color:#f6ffef;border:1px solid #49643a;box-shadow:inset 3px 0 #c4ff68}
+.nav-active svg,.nav-item:hover svg,.eyebrow-dot,.status-good i,.connection-pill i,.status-good{color:#c4ff68}
+.primary-button,.plan-card button{background:linear-gradient(135deg,#d0ff8b,#b2f56b);border-color:#c4ff68;color:#11180c;box-shadow:0 7px 24px #c4ff6816}
+.primary-button:hover,.plan-card button:hover{background:#dcffad;box-shadow:0 10px 28px #c4ff6825}
+.subtle-button,.icon-button,.row-more{background:#111711;border-color:#303c2e;color:#cbd7c7}
+.subtle-button:hover,.icon-button:hover{border-color:#6d8c59;color:#eaffdf}
+.metric-icon.green,.text-green,.health-orb.orb-green,.status-good{color:#c4ff68}
+.metric-icon.green{background:#c4ff6815}
+.metric-icon.violet{color:#b8a8ff;background:#a99bff16}
+.metric-icon.amber{color:#f6c66f;background:#f6c66f12}
+.metric-icon.muted{color:#9aa89a;background:#ffffff08}
+.metric-value{color:#f4f7f1}
+.panel-heading{border-bottom-color:#283529}
+.provider-logo{background:#1b2319;border-color:#344331;color:#d8e7d2}
+.provider-logo.Groq,.provider-logo.groq{background:#282016;color:#ffb26b}
+.provider-logo.OpenRouter,.provider-logo.openrouter{background:#211b30;color:#c5a9ff}
+.status-badge.status-good,.mini-green{background:#c4ff6812;border-color:#5b7d3f;color:#d4ffac}
+.status-badge.status-idle,.mini-status{background:#ffffff05;border-color:#303c2e;color:#9aa89a}
+.health-orb.orb-green{background:#c4ff6815;border-color:#4b633b}
+.health-callout{background:#121a11;border-color:#34472b}
+.notice-banner{background:#201c14;border-color:#514326}
+.error-banner{background:#211517;border-color:#48292b}
+.env-guide{background:#111711;border-color:#283529}
+.health-callout svg{color:#c4ff68}
+.notice-banner>svg{color:#f6c66f}
+.error-banner>svg{color:#ffaaaa}
+.search-box{background:#0d120d;border-color:#303c2e}
+.search-box input{color:#f4f7f1}
+.search-box:focus-within{border-color:#9ecf69;box-shadow:0 0 0 3px #c4ff6812}
+.directory-item{background:#101610;border-color:#283529}
+.empty-state{color:#9aa89a}
+.empty-icon,.coming-icon,.quick-icon,.plan-icon{background:#c4ff6812;color:#c4ff68;border-color:#3d5532}
+.status-checklist{border-color:#283529}
+.status-checklist>div svg{color:#c4ff68}
+.status-checklist .pending-check svg{color:#f6c66f}
+.app-footer{border-top-color:#283529}
+.app-footer i{color:#c4ff68}
+.connection-pill{color:#d4ffac;background:#c4ff6810;border-color:#435b35}
+.connection-pill i,.eyebrow-dot{background:#c4ff68;box-shadow:0 0 10px #c4ff6880}
+.connection-error{color:#ffaaaa;background:#ff6a3d0c;border-color:#71311f}
+.error-banner button{color:#ffaaaa}
+.toast{background:#121a11;border-color:#435b35;color:#e5ffd4}
+a:hover{color:#d4ffac}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid #c4ff68;outline-offset:3px}
+@media(max-width:760px){.sidebar{box-shadow:20px 0 60px #0009}.mobile-backdrop{background:#070907d9}}
