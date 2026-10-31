@@ -8,7 +8,7 @@ API FLOW is an early-stage, self-hostable OpenAI-compatible gateway. It forwards
 
 - Public product landing page served from `public/index.html`, with a customer console at `public/dashboard.html`.
 - OpenAI-compatible `POST /v1/chat/completions` endpoint.
-- Multiple Groq keys and OpenRouter keys configured server-side.
+- Multiple keys for Groq, OpenRouter, OpenAI, DeepSeek, and Mistral configured server-side using OpenAI-compatible chat-completions APIs.
 - Sequential provider/key failover for selected transient errors.
 - Shared operator key authentication for controlled testing, plus individual customer API-key verification when Supabase server credentials are configured.
 - Supabase-backed signup/login endpoints, account profile lookup, and customer API-key create/list/revoke endpoints.
@@ -64,7 +64,7 @@ Do not expose this early gateway as a public multi-customer API service until cu
    cp .env.example .env
    ```
 
-3. Edit `.env`. Add comma-separated keys to `GROQ_API_KEYS` and/or `OPENROUTER_API_KEYS`. Keep real keys private and never commit `.env`.
+3. Edit `.env`. Add comma-separated keys to `GROQ_API_KEYS`, `OPENROUTER_API_KEYS`, `OPENAI_API_KEYS`, `DEEPSEEK_API_KEYS`, and/or `MISTRAL_API_KEYS`. Keep real keys private and never commit `.env`.
 
 4. Start in development:
 
@@ -123,6 +123,8 @@ Use a model supported by the configured provider. This initial version preserves
 - `SUPABASE_SECRET_KEY` — server-only Supabase secret key; never expose it to the browser or commit real values.
 - `GROQ_API_KEYS` — comma-separated Groq key pool. Also accepts `GROQ_API_KEY` and `GROQ_API_KEY_1` through `GROQ_API_KEY_20` for hosting dashboards that store each key separately.
 - `OPENROUTER_API_KEYS` — comma-separated OpenRouter key pool. Also accepts `OPENROUTER_API_KEY` and `OPENROUTER_API_KEY_1` through `OPENROUTER_API_KEY_20`.
+- `OPENAI_API_KEYS`, `DEEPSEEK_API_KEYS`, `MISTRAL_API_KEYS` — optional comma-separated key pools for the respective OpenAI-compatible APIs. Each also accepts the singular `*_API_KEY` and numbered `*_API_KEY_1` through `*_API_KEY_20` forms.
+- `OPENAI_BASE_URL`, `DEEPSEEK_BASE_URL`, `MISTRAL_BASE_URL` — optional base URL overrides.
 
 Provider keys are de-duplicated at startup. `/health` reports configured key counts only and never returns secret values. Environment-variable changes on Vercel require a new deployment to take effect.
 - `GROQ_BASE_URL`, `OPENROUTER_BASE_URL` — optional provider base URLs (also used by automated mock tests).

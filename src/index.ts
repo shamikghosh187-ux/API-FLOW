@@ -18,7 +18,7 @@ function clamp(value: number, min: number, max: number): number {
   return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : min;
 }
 
-type ProviderName = "groq" | "openrouter";
+type ProviderName = "groq" | "openrouter" | "openai" | "deepseek" | "mistral";
 type Provider = { name: ProviderName; baseUrl: string; keys: string[]; headers: Record<string, string> };
 
 function parseKeys(value: string | undefined): string[] {
@@ -56,6 +56,24 @@ const providers: Provider[] = [
       ...(process.env.OPENROUTER_HTTP_REFERER ? { "HTTP-Referer": process.env.OPENROUTER_HTTP_REFERER } : {}),
       ...(process.env.OPENROUTER_APP_TITLE ? { "X-Title": process.env.OPENROUTER_APP_TITLE } : {})
     }
+  },
+  {
+    name: "openai",
+    baseUrl: process.env.OPENAI_BASE_URL?.trim() || "https://api.openai.com/v1",
+    keys: collectKeys("OPENAI_API_KEYS", "OPENAI_API_KEY"),
+    headers: {}
+  },
+  {
+    name: "deepseek",
+    baseUrl: process.env.DEEPSEEK_BASE_URL?.trim() || "https://api.deepseek.com",
+    keys: collectKeys("DEEPSEEK_API_KEYS", "DEEPSEEK_API_KEY"),
+    headers: {}
+  },
+  {
+    name: "mistral",
+    baseUrl: process.env.MISTRAL_BASE_URL?.trim() || "https://api.mistral.ai/v1",
+    keys: collectKeys("MISTRAL_API_KEYS", "MISTRAL_API_KEY"),
+    headers: {}
   }
 ];
 
@@ -146,7 +164,7 @@ app.get("/health", (_req, res) => {
 app.get("/api/info", (_req, res) => {
   res.json({
     name: "API FLOW",
-    description: "OpenAI-compatible API gateway with provider and API-key failover.",
+    description: "Multi-provider OpenAI-compatible AI gateway with configurable provider and API-key failover.",
     endpoints: { health: "/health", chatCompletions: "POST /v1/chat/completions" },
     limits: {
       dailyRequests: { free: 100, pro: 1000, business: 5000 },
@@ -187,7 +205,7 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
   const available = providers.filter((provider) => provider.keys.length > 0);
   if (!available.length) {
     res.status(503).json({
-      error: { message: "No providers configured. Set GROQ_API_KEYS or GROQ_API_KEY (optionally GROQ_API_KEY_1 through GROQ_API_KEY_20), or the equivalent OPENROUTER variables in the production environment, then redeploy.", type: "configuration_error" }
+      error: { message: "No providers configured. Add server-side provider keys such as GROQ_API_KEY, OPENROUTER_API_KEY, OPENAI_API_KEY, DEEPSEEK_API_KEY, or MISTRAL_API_KEY, then redeploy.", type: "configuration_error" }
     });
     return;
   }
@@ -260,7 +278,7 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
           try {
             await recordCustomerUsage({
               ...customer,
-              provider: attempt.provider.name,
+              provider: (["groq", "openrouter"].includes(attempt.provider.name) ? attempt.provider.name : "other") as "groq" | "openrouter" | "other",
               model: typeof payload?.model === "string" ? payload.model : parsed.data.model,
               statusCode: upstream.status,
               latencyMs: Date.now() - startedAt,
@@ -288,7 +306,7 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
         const customer = res.locals.apiFlowCustomer as { userId: string; keyId: string } | undefined;
         if (customer) {
           try {
-            await recordCustomerUsage({ ...customer, provider: attempt.provider.name, model: parsed.data.model, statusCode: upstream.status, latencyMs: Date.now() - startedAt });
+            await recordCustomerUsage({ ...customer, provider: (["groq", "openrouter"].includes(attempt.provider.name) ? attempt.provider.name : "other") as "groq" | "openrouter" | "other", model: parsed.data.model, statusCode: upstream.status, latencyMs: Date.now() - startedAt });
           } catch (usageError) {
             logger.error({ err: usageError }, "Could not record customer usage");
           }
@@ -313,7 +331,7 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
     try {
       await recordCustomerUsage({
         ...failedRequestCustomer,
-        provider: errors.at(-1)?.provider ?? "other",
+        provider: (["groq", "openrouter"].includes(errors.at(-1)?.provider ?? "") ? errors.at(-1)!.provider : "other") as "groq" | "openrouter" | "other",
         model: parsed.data.model,
         statusCode: 502
       });
