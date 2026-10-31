@@ -7,3 +7,59 @@
 @media(max-width:1100px){.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.content-grid{grid-template-columns:minmax(0,1fr)}.quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.quick-item:nth-child(2){border-right:0}.quick-item:nth-child(-n+2){border-bottom:1px solid #22252d}}
 @media(max-width:720px){.sidebar{transform:translateX(-100%);transition:transform .22s ease;box-shadow:none}.sidebar.sidebar-open{transform:translateX(0);box-shadow:15px 0 40px #0008}.mobile-backdrop{display:block;position:fixed;inset:0;background:#0009;border:0;z-index:25}.mobile-menu,.mobile-close{display:grid;place-items:center;background:transparent;border:0;color:#a9b0bd;padding:5px}.mobile-close{margin-left:auto}.app-main{margin-left:0}.topbar{height:56px;padding:0 15px}.top-left{display:flex;align-items:center;gap:10px}.top-actions{gap:7px}.page-content{padding:23px 14px 15px}.page-heading{align-items:flex-start;flex-direction:column;margin-bottom:20px;gap:14px}.page-heading h1{font-size:24px}.page-heading p{max-width:440px}.page-heading>.primary-button{width:100%}.metric-grid{gap:9px}.metric-card{padding:13px 12px}.metric-top{font-size:9px}.metric-value{font-size:23px}.metric-detail{font-size:9px;line-height:1.5}.content-grid{gap:12px}.panel-heading{padding:14px 13px}.provider-row{padding:11px 12px;gap:8px;flex-wrap:wrap}.provider-meta{min-width:80px}.row-more{margin-left:auto}.status-badge{font-size:8px}.quick-grid{grid-template-columns:1fr 1fr}.quick-item{padding:13px 11px}.app-footer{flex-wrap:wrap;line-height:1.6}.app-footer span:nth-child(2){order:3;width:100%}.directory-grid{grid-template-columns:1fr;padding:5px 12px 12px}.coming-panel{padding:28px 16px}.top-actions .icon-button:nth-of-type(2){display:none}.connection-pill{font-size:9px}.search-box input{width:95px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+
+/* API FLOW crimson console theme — appended override */
+:root{
+ color:#f5f3f5;background:#080608;
+ --bg:#080608;--panel:#120b10;--line:#3a1723;--text:#f5f3f5;--muted:#b49aa3;
+ --lime:#ff244f;--violet:#ff526f;--mono:'DM Mono',monospace;
+}
+body,.app-shell{background:#080608;color:#f5f3f5}
+.app-shell{background-image:radial-gradient(ellipse at 82% 0%,#6e10251c,transparent 38%),radial-gradient(ellipse at 0% 100%,#8f10201a,transparent 38%)}
+.sidebar{background:linear-gradient(180deg,#10090d 0%,#0b070a 100%);border-right-color:#3b1724;box-shadow:10px 0 45px #0003}
+.app-mark,.mark{background:#ff244f;color:#fff;box-shadow:0 0 28px #ff244f35}
+.workspace-avatar,.profile-avatar,.user-dot{background:linear-gradient(145deg,#ff244f,#8e102b);color:#fff}
+.workspace-switch,.plan-card,.panel,.metric-card,.quick-item,.coming-panel{background:linear-gradient(145deg,#170d12,#10090d);border-color:#3b1724}
+.workspace-switch:hover,.nav-item:hover,.quick-item:hover{background:#261019;border-color:#672037}
+.nav-label,.breadcrumbs,.page-heading p,.metric-detail,.provider-meta small,.health-desc,.muted-note,.app-footer{color:#b49aa3}
+.nav-item{color:#cbb9bf}
+.nav-active{background:linear-gradient(90deg,#4a1023,#260c16);color:#fff;border:1px solid #7b1b35;box-shadow:inset 3px 0 #ff244f}
+.nav-active svg,.nav-item:hover svg,.eyebrow-dot,.status-good i,.connection-pill i,.status-good{color:#ff4167}
+.primary-button,.plan-card button{background:linear-gradient(135deg,#ff244f,#c61039);border-color:#ff4167;color:white;box-shadow:0 7px 24px #ff244f1c}
+.primary-button:hover,.plan-card button:hover{background:linear-gradient(135deg,#ff4267,#e31845);box-shadow:0 10px 28px #ff244f2c}
+.subtle-button,.icon-button,.row-more{background:#1a0d13;border-color:#482031;color:#e5d6dc}
+.subtle-button:hover,.icon-button:hover{border-color:#b52549;color:#fff}
+.metric-icon.green,.text-green,.health-orb.orb-green,.status-good{color:#ff4267}
+.metric-icon.green{background:#ff244f17}
+.metric-icon.violet{color:#ff6683;background:#ff244f17}
+.metric-icon.amber{color:#ff9c70;background:#ff6a3d16}
+.metric-icon.muted{color:#b49aa3;background:#ffffff08}
+.metric-value{color:#fff}
+.panel-heading{border-bottom-color:#3b1724}
+.provider-logo{background:#28101a;border-color:#612039;color:#ff5b7a}
+.provider-logo.Groq,.provider-logo.groq,.provider-logo.OpenRouter,.provider-logo.openrouter{background:#2a1019;color:#ff5275}
+.status-badge.status-good,.mini-green{background:#ff244f14;border-color:#ff244f48;color:#ff6683}
+.status-badge.status-idle,.mini-status{background:#ffffff05;border-color:#482031;color:#b49aa3}
+.health-orb.orb-green{background:#ff244f15;border-color:#ff244f3b}
+.health-callout,.notice-banner,.error-banner,.env-guide{background:#1c0c13;border-color:#5c1a30}
+.health-callout svg,.notice-banner>svg,.error-banner>svg{color:#ff4167}
+.search-box{background:#10090d;border-color:#482031}
+.search-box input{color:#fff}
+.search-box:focus-within{border-color:#ff4167;box-shadow:0 0 0 3px #ff244f15}
+.directory-item{background:#140b10;border-color:#3b1724}
+.empty-state{color:#b49aa3}
+.empty-icon,.coming-icon,.quick-icon,.plan-icon{background:#ff244f16;color:#ff4167;border-color:#692039}
+.status-checklist{border-color:#3b1724}
+.status-checklist>div svg{color:#ff4167}
+.status-checklist .pending-check svg{color:#c08b99}
+.app-footer{border-top-color:#3b1724}
+.app-footer i{color:#ff4167}
+.connection-pill{color:#ff6683;background:#ff244f12;border-color:#6b1d34}
+.connection-pill i,.eyebrow-dot{background:#ff244f;box-shadow:0 0 10px #ff244f90}
+.connection-error{color:#ff9b85;background:#ff6a3d0c;border-color:#71311f}
+.error-banner button{color:#ff6683}
+.toast{background:#1c0c13;border-color:#79213a;color:#fff}
+a:hover{color:#ff6683}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid #ff4167;outline-offset:3px}
+@media(max-width:760px){.sidebar{box-shadow:20px 0 60px #0009}.mobile-backdrop{background:#080608d9}}
