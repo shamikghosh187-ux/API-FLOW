@@ -331,7 +331,7 @@ app.post("/v1/chat/completions", requireGatewayKey, async (req, res) => {
     try {
       await recordCustomerUsage({
         ...failedRequestCustomer,
-        provider: errors.at(-1)?.provider ?? "other",
+        provider: (["groq", "openrouter"].includes(errors.at(-1)?.provider ?? "") ? errors.at(-1)!.provider : "other") as "groq" | "openrouter" | "other",
         model: parsed.data.model,
         statusCode: 502
       });
